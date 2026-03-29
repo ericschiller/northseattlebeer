@@ -1,36 +1,34 @@
-# Around the Grounds 🍺🚚
+# North Seattle Food Trucks
 
-A Python CLI tool for tracking food truck schedules across multiple breweries. Scrapes brewery websites asynchronously and generates a unified 7-day schedule with AI-powered enhancements.
+A Python CLI tool for tracking food truck schedules and brewery events across North Seattle. Scrapes brewery websites asynchronously and generates a unified 7-day schedule served via a Nuxt 3 web frontend.
 
 ## Features
 
-- 🔄 **Async Web Scraping**: Concurrent processing of multiple brewery websites
-- 🖼️ **AI Vision Analysis**: Extracts vendor names from food truck images using Claude Vision API
-- 🎋 **AI Haiku Generation**: Creates weather-aware, seasonal haikus about daily food truck scenes using real-time weather data
-- 🌐 **Auto-Deployment**: Git-based deployment to static site platforms (Vercel, Netlify, etc.)
-- ⏰ **Temporal Workflows**: Reliable scheduling with cloud or local execution
-- 🧪 **Comprehensive Testing**: 196 tests covering unit, integration, and error scenarios
+- **Async Web Scraping**: Concurrent processing of multiple brewery websites
+- **Events Tab**: Separates food trucks from other brewery events (trivia, live music, community events)
+- **AI Vision Analysis**: Extracts vendor names from food truck images using Claude Vision API
+- **Auto-Deployment**: Git-based deployment to static site platforms (Vercel, Netlify, etc.)
+- **Temporal Workflows**: Reliable scheduling with cloud or local execution
+- **Comprehensive Testing**: Tests covering unit, integration, and error scenarios
 
 ## How It Works
 
 This repository contains the **scraping and scheduling engine**. When run with `--deploy`, it:
 
-1. **Scrapes** brewery websites for food truck schedules
-2. **Generates AI content**: Creates daily haikus and extracts vendor names from images (when `ANTHROPIC_API_KEY` is set)
-3. **Generates** static site data (`data.json`) in `frontend/public/`
-4. **Builds** the Nuxt frontend (`npm run generate`)
-5. **Target repo** is updated with the new data and code, and automatically deployed by platforms like Vercel
+1. **Scrapes** brewery websites for food truck and event schedules
+2. **Generates** static site data (`data.json`) in `frontend/public/`
+3. **Pushes** the updated frontend to a target repository for automatic deployment
 
 **Two-Repository Architecture:**
-- **Source repo** (this one): Contains scraping code, runs workers, web templates
-- **Target repo** (e.g., `ballard-food-trucks`): Receives complete website, served as static site
+- **Source repo** (this one): Contains scraping code, Nuxt frontend, and web templates
+- **Target repo**: Receives the built site, served as a static site
 
 ## Quick Start
 
 ### Installation
 ```bash
-git clone https://github.com/steveandroulakis/around-the-grounds
-cd around-the-grounds
+git clone <this-repo>
+cd northseattlebeer
 uv sync
 ```
 
@@ -39,66 +37,10 @@ uv sync
 uv run around-the-grounds              # Show 7-day schedule
 uv run around-the-grounds --verbose    # With detailed logging
 uv run around-the-grounds --preview    # Generate local preview files
+uv run around-the-grounds --deploy     # Scrape and deploy to web
 ```
-
-### Example Output
-```
-🍺 Around the Grounds - Food Truck Tracker
-==================================================
-Found 23 food truck events:
-
-🎋 Today's Haiku:
-🍂 Autumn mist rolls in—
-Plaza Garcia's warmth glows
-at Obec's wood door 🍺
-
-📅 Saturday, July 05, 2025
-  🚚 Woodshop BBQ @ Stoup Brewing - Ballard 01:00 PM - 08:00 PM
-  🚚 Kaosamai Thai @ Obec Brewing 04:00 PM - 08:00 PM
-
-📅 Sunday, July 06, 2025
-  🚚 Burger Planet @ Stoup Brewing - Ballard 01:00 PM - 07:00 PM
-  🚚 TOLU 🖼️🤖 @ Urban Family Brewing 01:00 PM - 07:00 PM
-```
-
-## Web Deployment (Optional)
-
-To deploy a live website, you need a **target repository** and **GitHub App** for authentication.
-
-### Prerequisites
-- Target GitHub repository (e.g., `username/ballard-food-trucks`)  
-- GitHub App with repository access
-- Deployment platform (Vercel, Netlify, etc.)
-
-### GitHub App Setup
-
-1. **Create GitHub App** at https://github.com/settings/apps
-   - **Repository permissions**: Contents (Read & Write), Metadata (Read)
-   - **Generate private key** and save the `.pem` file
-   - **Install app** on your target repository
-
-2. **Configure Environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your GitHub App credentials:
-   # GITHUB_APP_ID=123456
-   # GITHUB_CLIENT_ID=your-github-client-id
-   # GITHUB_APP_PRIVATE_KEY_B64=<base64-encoded-private-key>
-   # GIT_REPOSITORY_URL=https://github.com/username/ballard-food-trucks.git
-   ```
-   
-   **Note:** The system includes working defaults for `GITHUB_APP_ID` and `GITHUB_CLIENT_ID`. You only need to override these if using a different GitHub App.
-
-3. **Deploy Data**
-   ```bash
-   uv run around-the-grounds --deploy
-   ```
-
-This will copy web templates and generate fresh data in your target repository, triggering automatic deployment.
 
 ## Local Preview & Testing
-
-Before deploying, you can preview changes locally:
 
 ```bash
 # 1. Generate web data locally
@@ -113,167 +55,56 @@ npm run dev
 
 **What `--preview` does:**
 1. Scrapes fresh data from all brewery websites
-2. Generates `data.json` in `frontend/public/`
+2. Generates `data.json` in `frontend/public/` with `truck_events` and `other_events` arrays
 
-This allows you to test web interface changes, verify data accuracy, and debug issues before deploying to production.
+## Web Deployment
 
-## Scheduled Updates
-
-Use **Temporal workflows** to run automatic updates with a persistent worker system.
-
-### Setup Temporal Worker
-```bash
-# Start worker (runs continuously)
-uv run python -m around_the_grounds.temporal.worker
-
-# Create schedule (runs every 30 minutes) 
-uv run python -m around_the_grounds.temporal.schedule_manager create --schedule-id daily-scrape --interval 30
-```
-
-### Schedule Management
-```bash
-# List all schedules
-uv run python -m around_the_grounds.temporal.schedule_manager list
-
-# Pause/unpause schedules
-uv run python -m around_the_grounds.temporal.schedule_manager pause --schedule-id daily-scrape
-uv run python -m around_the_grounds.temporal.schedule_manager unpause --schedule-id daily-scrape
-
-# Trigger immediate execution
-uv run python -m around_the_grounds.temporal.schedule_manager trigger --schedule-id daily-scrape
-
-# Delete schedule
-uv run python -m around_the_grounds.temporal.schedule_manager delete --schedule-id daily-scrape
-```
-
-Workers can run on any system (local, cloud, Synology NAS) and will receive scheduled workflow executions from Temporal.
-
-### Production Deployment via CI/CD
-
-For automated production updates using Docker and Watchtower:
-
-A **Temporal Worker** runs in a Docker container and continuously listens for scheduled workflow executions. This worker will automatically pick up and execute any schedules you've configured (see [Scheduled Updates](#scheduled-updates) section above for creating schedules).
-
-**Example CICD Flow:**
-1. **Code changes** → GitHub Actions → Docker Hub (4 minutes)
-2. **Watchtower** detects new image → pulls and restarts worker container (every 5 minutes)
-3. **Temporal Worker** in container listens for scheduled workflow executions
-4. **Schedules trigger** automatically (every 30 minutes, etc.) or manually starting workflows via UI/CLI/API
-5. **Worker executes** scraping and deployment workflow which pushes to the target repository
-6. **Data deploys** automatically to target repository → live website updates (Vercel, Netlify, etc.)
-
-The containerized worker provides reliable, continuous execution of scheduled food truck data updates without manual intervention.
-
-In my case it looks like this:
-```bash
-# 1. GitHub Actions builds and pushes to Docker Hub (takes ~4 minutes)
-# 2. Watchtower runs every 5 minutes on my home server to pull the latest Temporal worker image
-# 3. Monitor worker container (it should auto-restart with the new image):
-ssh admin@192.168.0.20
-docker ps -a -f "ancestor=steveandroulakis/around-the-grounds-worker:latest"
-docker logs -f around-the-grounds-worker
-
-# 4. Trigger Temporal schedules manually via:
-#    - Temporal UI (web interface)
-#    - CLI: uv run python -m around_the_grounds.temporal.schedule_manager trigger --schedule-id daily-scrape
-#    - Temporal API (programmatic)
-
-# 5. Worker executes the scraping workflow
-# 6. Data is pushed to target repository (e.g., github.com/steveandroulakis/ballard-food-trucks)
-# 7. Target repository is deployed automatically (e.g., Vercel, Netlify
-```
-
-## Configuration
-
-### Supported Breweries
-- **Stoup Brewing - Ballard**: HTML parsing with date/time extraction
-- **Yonder Cider & Bale Breaker - Ballard**: Squarespace API integration  
-- **Obec Brewing**: Text-based parsing
-- **Urban Family Brewing**: Hivey API with AI vision analysis fallback
-- **Wheelie Pop Brewing**: HTML parsing with date/time extraction
+To deploy a live website, you need a **target repository** and **GitHub App** for authentication. See [DEPLOYMENT.MD](./DEPLOYMENT.MD) for full setup.
 
 ### Environment Variables
 ```bash
-# Optional: AI features (vision analysis + haiku generation)
-ANTHROPIC_API_KEY=your-anthropic-api-key  # Enables vendor name extraction from images and daily haiku generation
-
-# Optional: Weather location for haiku generation (defaults to Ballard, Seattle)
-WEATHER_LOCATION_LAT=47.6762   # Latitude for weather forecasts
-WEATHER_LOCATION_LON=-122.3851 # Longitude for weather forecasts
+# Optional: AI vision analysis
+ANTHROPIC_API_KEY=your-anthropic-api-key
 
 # Required for web deployment
 GITHUB_APP_ID=123456
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_APP_PRIVATE_KEY_B64=base64-encoded-private-key
 GIT_REPOSITORY_URL=https://github.com/username/target-repo.git
-
-# Optional: Temporal configuration (defaults to localhost)
-TEMPORAL_ADDRESS=your-namespace.acct.tmprl.cloud:7233
-TEMPORAL_API_KEY=your-temporal-api-key
 ```
 
-### Haiku Prompt Template
-- Default prompt: `around_the_grounds/config/haiku_prompt.txt`
-- Override via env var: `HAIKU_PROMPT_FILE=/path/to/custom_prompt.txt`
-- Template placeholders: `{date}`, `{truck_name}`, `{brewery_name}`, `{events_summary}`, `{weather}`, `{time_of_day}`
-- Model: `claude-sonnet-4-6`
+## Scheduled Updates
 
-**Weather integration**: The haiku generator fetches real-time weather from the [Open-Meteo API](https://open-meteo.com/) (free, no API key needed). By default, weather is fetched for Ballard, Seattle, but the location is configurable via environment variables (see below). Weather conditions are woven into the generated haikus for more authentic, grounded poetry. Time-based logic selects the appropriate forecast window:
-- Before 6pm PT: uses afternoon forecast
-- 6-9pm PT: uses evening forecast
-- 9pm+ PT: uses next day's afternoon forecast
+Use **Temporal workflows** to run automatic updates with a persistent worker system.
 
-If the weather fetch fails, haiku generation is gracefully skipped.
-
-Copy the default file and tweak the location descriptions, tone, or formatting to suit your own food truck scene. Missing placeholders trigger a safe fallback to the built-in prompt.
-
-### Custom Repository
 ```bash
-# Deploy to specific repository
-uv run around-the-grounds --deploy --git-repo https://github.com/username/custom-repo.git
+# Start worker (runs continuously)
+uv run python -m around_the_grounds.temporal.worker
 
-# Or set environment variable
-export GIT_REPOSITORY_URL="https://github.com/username/custom-repo.git"
-uv run around-the-grounds --deploy
+# Create schedule (runs every 30 minutes)
+uv run python -m around_the_grounds.temporal.schedule_manager create --schedule-id daily-scrape --interval 30
+
+# List / pause / trigger / delete schedules
+uv run python -m around_the_grounds.temporal.schedule_manager list
+uv run python -m around_the_grounds.temporal.schedule_manager trigger --schedule-id daily-scrape
+uv run python -m around_the_grounds.temporal.schedule_manager delete --schedule-id daily-scrape
 ```
 
-## Development
+See [SCHEDULES.md](./SCHEDULES.md) for full schedule management documentation.
 
-### Setup
-```bash
-uv sync --dev                          # Install dev dependencies
-```
+## Configuration
 
-### Local Development Workflow
-```bash
-# 1. Make code changes
-# 2. Test locally with preview
-uv run around-the-grounds --preview
-cd public && python -m http.server 8000
+### Supported Breweries / Sources
 
-# Quick verification tests:
-cd public && timeout 10s python -m http.server 8000 > /dev/null 2>&1 & sleep 1 && curl -s http://localhost:8000/data.json | head -5 && pkill -f "python -m http.server" || true
-
-# 3. Run tests
-uv run python -m pytest
-
-# 4. Deploy when ready
-uv run around-the-grounds --deploy
-```
-
-### Testing  
-```bash
-uv run python -m pytest                # Run all 196 tests
-uv run python -m pytest -v             # Verbose output
-uv run python -m pytest tests/parsers/ # Parser-specific tests
-```
-
-### Code Quality
-```bash
-uv run black .                         # Format code
-uv run flake8                          # Lint code  
-uv run mypy around_the_grounds/        # Type checking
-```
+| Brewery | Parser | Notes |
+|---|---|---|
+| Chuck's Hop Shop Greenwood | CSV (Google Sheets) | Food trucks + events |
+| Broadview Tap House | Seattle Food Truck API | Food trucks |
+| Broadview Tap House | Google Calendar iCal | Events (live music, trivia, etc.) |
+| Ridgecrest Public House | Squarespace Events | Food trucks + events |
+| Shoreline Community College | WA Food Trucks | Food trucks |
+| Hellbent Brewing Company | SimCal (WordPress) | Food trucks |
+| Ravenna Brewing Co. | Squarespace Events | Food trucks + events |
 
 ### Adding New Breweries
 1. Create parser class in `around_the_grounds/parsers/`
@@ -281,22 +112,80 @@ uv run mypy around_the_grounds/        # Type checking
 3. Add brewery config to `around_the_grounds/config/breweries.json`
 4. Write tests in `tests/parsers/`
 
-See [CLAUDE.md](CLAUDE.md) for detailed development documentation.
+See [ADDING-BREWERIES.md](./ADDING-BREWERIES.md) for detailed instructions.
+
+### Event Categories
+
+Scraped events are assigned a `category` field:
+
+| Category | Description |
+|---|---|
+| `food-truck` | Food truck bookings |
+| `trivia` | Trivia nights |
+| `live-music` | Live music events |
+| `community` | Run clubs, knitting groups, and other recurring community events |
+
+The frontend splits events into a **TRUCKS** tab and an **EVENTS** tab based on this field.
+
+## Development
+
+### Setup
+```bash
+uv sync --dev
+```
+
+### Local Workflow
+```bash
+uv run around-the-grounds --preview    # Scrape + generate data.json
+cd frontend && npm run dev             # Run Nuxt dev server
+uv run python -m pytest                # Run tests
+```
+
+### Code Quality
+```bash
+uv run black .
+uv run flake8
+uv run mypy around_the_grounds/
+```
 
 ## Architecture
 
-- **CLI Tool**: `around_the_grounds/main.py` - Entry point
-- **Parsers**: Extensible system for different brewery websites
+- **CLI**: `around_the_grounds/main.py` — entry point, produces `truck_events`/`other_events` split in `data.json`
+- **Parsers**: Extensible system supporting HTML, CSV, JSON APIs, Squarespace, SimCal, iCal, Google Calendar
 - **Scrapers**: Async coordinator with error handling and retries
-- **AI Utils**: Vision analyzer for vendor identification, weather-aware haiku generator for daily scenes
+- **AI Utils**: Claude Vision API for vendor name extraction from images
 - **Temporal**: Workflow orchestration for reliable scheduling
-- **Web Interface**: Template files in `public_template/` (copied to target repo)
-- **Tests**: 196 tests covering unit, integration, and error scenarios
+- **Frontend**: Nuxt 3 app in `frontend/` with TRUCKS / EVENTS tab toggle, Tailwind CSS
+
+### Frontend
+
+The `frontend/` directory is a Nuxt 3 app:
+
+```
+frontend/
+├── app.vue                  # Root component with tab toggle and event rendering
+├── components/
+│   ├── AppHeader.vue        # Site header with last-updated date
+│   ├── AppFooter.vue        # Site footer
+│   ├── DaySection.vue       # Day group with header and event count
+│   └── TruckItem.vue        # Individual event card
+├── public/
+│   └── data.json            # Generated by --preview or --deploy (git-ignored)
+└── package.json
+```
+
+```bash
+# Run frontend dev server (after generating data.json)
+cd frontend
+npm install
+npm run dev
+```
 
 ## Requirements
 
 - Python 3.8+
-- Dependencies: `aiohttp`, `beautifulsoup4`, `temporalio`, `anthropic` (optional)
+- Node.js (for frontend)
+- Dependencies: `aiohttp`, `beautifulsoup4`, `temporalio`, `anthropic` (optional for AI features)
 
 ## License
 
