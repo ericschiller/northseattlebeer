@@ -23,6 +23,7 @@ class SquarespaceEventsParser(BaseParser):
     def __init__(self, brewery: Brewery) -> None:
         super().__init__(brewery)
         self.exclude_patterns = self.brewery.parser_config.get("exclude_patterns", [])
+        self.category_patterns: dict = self.brewery.parser_config.get("category_patterns", {})
 
     async def parse(self, session: aiohttp.ClientSession) -> List[FoodTruckEvent]:
         try:
@@ -41,8 +42,12 @@ class SquarespaceEventsParser(BaseParser):
                     if items:
                         events = []
                         for item in items:
-                            event = self._parse_json_item(item)
-                            if event and not self._is_excluded(event.food_truck_name):
+                            title = item.get("title", "").strip()
+                            category = self._get_category(title)
+                            if category is None:
+                                continue
+                            event = self._parse_json_item(item, category)
+                            if event:
                                 events.append(event)
                         
                         valid_events = self.filter_valid_events(events)
@@ -62,7 +67,7 @@ class SquarespaceEventsParser(BaseParser):
         # But for Ridgecrest, ?format=json is confirmed to work.
         return []
 
-    def _parse_json_item(self, item: dict) -> Optional[FoodTruckEvent]:
+    def _parse_json_item(self, item: dict, category: str = "food-truck") -> Optional[FoodTruckEvent]:
         try:
             title = item.get("title", "").strip()
             if not title:
@@ -97,14 +102,23 @@ class SquarespaceEventsParser(BaseParser):
                 end_time=end_date,
                 description=None,
                 ai_generated_name=False,
+                category=category,
             )
         except Exception as e:
             self.logger.error(f"Error parsing Squarespace JSON item: {str(e)}")
             return None
 
-    def _is_excluded(self, title: str) -> bool:
-        """Check if the event title matches any exclusion patterns (e.g., Trivia, Knit Nite)"""
+    def _get_category(self, title: str) -> Optional[str]:
+        """Return the event category, or None to exclude the event.
+
+        - None: hard-exclude (header entries, meta items)
+        - "food-truck": it's a food truck booking
+        - "trivia", "community", etc.: a non-truck event to include in Events tab
+        """
         for pattern in self.exclude_patterns:
             if re.search(pattern, title, re.IGNORECASE):
-                return True
-        return False
+                return None
+        for pattern, category in self.category_patterns.items():
+            if re.search(pattern, title, re.IGNORECASE):
+                return category
+        return "food-truck"

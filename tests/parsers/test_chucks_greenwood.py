@@ -78,10 +78,18 @@ class TestChucksGreenwoodParser:
                 )  # From "Brunch: Good Morning Tacos"
                 assert "Tat's Deli" in event_names  # No prefix
 
-                # Verify events are only food trucks (no "Geeks Who Drink Trivia" or "Music Bingo")
-                for event in events:
-                    assert "Trivia" not in event.food_truck_name
-                    assert "Bingo" not in event.food_truck_name
+                # Verify non-truck events are included but with correct categories
+                trivia = next((e for e in events if "Trivia" in e.food_truck_name), None)
+                assert trivia is not None
+                assert trivia.category == "trivia"
+
+                bingo = next((e for e in events if "Bingo" in e.food_truck_name), None)
+                assert bingo is not None
+                assert bingo.category == "community"
+
+                # Verify food trucks have food-truck category
+                truck = next(e for e in events if e.food_truck_name == "T'Juana")
+                assert truck.category == "food-truck"
 
     @pytest.mark.asyncio
     @freeze_time("2025-08-01")
@@ -165,7 +173,7 @@ Mon,Aug 4,12 AM,to,Sat,Food Truck,Tat's Deli,Sun,Sat,FALSE,TRUE"""
     async def test_parse_no_food_truck_events(
         self, parser: ChucksGreenwoodParser
     ) -> None:
-        """Test parsing when no food truck entries are found."""
+        """Test parsing when only non-truck Event rows are present."""
         non_food_truck_csv = """Greenwood Events & Food Trucks,,,,,,,Date Created,Last Updated,All Day Event,Recurring Event
 Wed,Aug 6,12 AM,to,Wed,Event,Geeks Who Drink Trivia,Thu,Wed,FALSE,TRUE
 Tue,Aug 12,12 AM,to,Tue,Event,Music Bingo,Wed,Tue,FALSE,TRUE"""
@@ -175,7 +183,9 @@ Tue,Aug 12,12 AM,to,Tue,Event,Music Bingo,Wed,Tue,FALSE,TRUE"""
 
             async with aiohttp.ClientSession() as session:
                 events = await parser.parse(session)
-                assert len(events) == 0
+                # Event rows are now included — trivia and community categories
+                assert len(events) == 2
+                assert all(e.category in ("trivia", "community") for e in events)
 
     # VENDOR NAME EXTRACTION TESTS
 

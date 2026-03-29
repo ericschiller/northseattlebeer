@@ -3,6 +3,7 @@ from typing import Dict, Type
 from .bale_breaker import BaleBreakerParser
 from .base import BaseParser
 from .chucks_greenwood import ChucksGreenwoodParser
+from .google_calendar import GoogleCalendarParser
 from .hellbent import HellbentParser
 from .lucky_envelope import LuckyEnvelopeParser
 from .obec_brewing import ObecBrewingParser
@@ -24,6 +25,7 @@ class ParserRegistry:
         "chucks-greenwood": ChucksGreenwoodParser,
         "salehs-corner": SeattleFoodTruckParser,
         "broadview-taphouse": SeattleFoodTruckParser,
+        "broadview-taphouse-events": GoogleCalendarParser,
         "ridgecrest-pub": SquarespaceEventsParser,
         "ravenna-brewing": SquarespaceEventsParser,
         "lucky-envelope": LuckyEnvelopeParser,

@@ -4,10 +4,8 @@
       <div class="text-on-surface-variant font-body text-xs uppercase tracking-[0.2em]">
         © 2024 THE INTENTIONAL ARCHIVE. <span class="text-primary font-bold">LITE VERSION.</span>
       </div>
-      <div class="flex gap-8">
-        <a class="text-on-surface-variant font-body text-xs uppercase tracking-[0.2em] hover:text-primary-mint transition-colors" href="#">Privacy</a>
-        <a class="text-on-surface-variant font-body text-xs uppercase tracking-[0.2em] hover:text-primary-mint transition-colors" href="#">Terms</a>
-        <a class="text-on-surface-variant font-body text-xs uppercase tracking-[0.2em] hover:text-primary-mint transition-colors" href="#">Contact</a>
+      <div class="text-on-surface-variant font-body text-[10px] uppercase tracking-[0.2em]">
+        Scraper by <a href="https://github.com/steveandroulakis/around-the-grounds" target="_blank" class="text-primary-mint hover:text-primary-mint-dark transition-colors">around-the-grounds</a>
       </div>
     </div>
   </footer>

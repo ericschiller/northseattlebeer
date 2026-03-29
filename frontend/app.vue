@@ -10,33 +10,35 @@ interface FoodTruckEvent {
   end_time: string
   description?: string
   extraction_method?: string
+  category?: string
 }
 
 interface WebData {
-  events: FoodTruckEvent[]
+  truck_events: FoodTruckEvent[]
+  other_events: FoodTruckEvent[]
   updated: string
   total_events: number
-  haiku?: string
+
   errors?: string[]
 }
 
 const { data, pending, error } = useFetch<WebData>('/data.json')
 
+const currentTab = ref<'trucks' | 'events'>('trucks')
+
 const groupedEvents = computed(() => {
-  if (!data.value?.events) return {}
-  
+  const list = currentTab.value === 'trucks'
+    ? data.value?.truck_events
+    : data.value?.other_events
+  if (!list) return {}
+
   const groups: Record<string, FoodTruckEvent[]> = {}
-  
-  // Group by date string (YYYY-MM-DD)
-  data.value.events.forEach(event => {
+  list.forEach(event => {
     const dateKey = event.date.split('T')[0]
-    if (!groups[dateKey]) {
-      groups[dateKey] = []
-    }
+    if (!groups[dateKey]) groups[dateKey] = []
     groups[dateKey].push(event)
   })
-  
-  // Sort dates
+
   return Object.keys(groups).sort().reduce((acc, key) => {
     acc[key] = groups[key]
     return acc
@@ -82,34 +84,45 @@ const formatUpdatedDate = (isoString: string) => {
       </div>
 
       <div v-else>
-        <FoodTruckHaiku :haiku="data?.haiku" />
+        <!-- Tab Toggle -->
+        <div class="flex gap-3 mt-12 mb-0">
+          <button
+            @click="currentTab = 'trucks'"
+            :class="currentTab === 'trucks'
+              ? 'px-5 py-2 rounded-lg font-label text-xs uppercase tracking-[0.4em] bg-primary-mint text-white font-bold transition-all'
+              : 'px-5 py-2 rounded-lg font-label text-xs uppercase tracking-[0.4em] bg-surface-container text-on-surface-variant font-bold transition-all hover:bg-surface-container-high'"
+          >TRUCKS</button>
+          <button
+            @click="currentTab = 'events'"
+            :class="currentTab === 'events'
+              ? 'px-5 py-2 rounded-lg font-label text-xs uppercase tracking-[0.4em] bg-primary-mint text-white font-bold transition-all'
+              : 'px-5 py-2 rounded-lg font-label text-xs uppercase tracking-[0.4em] bg-surface-container text-on-surface-variant font-bold transition-all hover:bg-surface-container-high'"
+          >EVENTS</button>
+        </div>
 
         <!-- Content Grid -->
-        <div class="space-y-32 mt-20">
-          <DaySection 
-            v-for="(events, dateKey, idx) in groupedEvents" 
+        <div class="space-y-16 mt-10">
+          <DaySection
+            v-for="(events, dateKey) in groupedEvents"
             :key="dateKey"
-            :index="idx"
             :day-name="formatDateParts(dateKey).dayName"
             :month-day="formatDateParts(dateKey).monthDay"
+            :count="(events as FoodTruckEvent[]).length"
+            :count-label="currentTab === 'trucks' ? ((events as FoodTruckEvent[]).length === 1 ? 'TRUCK' : 'TRUCKS') : ((events as FoodTruckEvent[]).length === 1 ? 'EVENT' : 'EVENTS')"
           >
-            <TruckItem 
-              v-for="(event, eIdx) in events" 
+            <TruckItem
+              v-for="(event, eIdx) in events"
               :key="eIdx"
               :name="event.vendor"
               :location="event.location"
               :location-url="event.location_url"
               :time="`${event.start_time} — ${event.end_time}`"
               :description="event.description"
-              :is-vision-extracted="event.extraction_method === 'vision'"
+              :category="event.category"
+:is-vision-extracted="event.extraction_method === 'vision'"
             />
           </DaySection>
 
-          <!-- Archive Termination -->
-          <div class="pt-24 text-center">
-            <div class="h-px w-full bg-gradient-to-r from-transparent via-outline/10 to-transparent mb-8"></div>
-            <span class="font-label text-[10px] uppercase tracking-[1.5em] text-primary-mint font-bold">END OF RECORD</span>
-          </div>
         </div>
 
         <!-- Errors Note -->

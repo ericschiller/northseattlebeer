@@ -157,65 +157,67 @@ async def _generate_haiku_for_today(events: List[FoodTruckEvent]) -> Optional[st
         return None
 
 
+def _event_to_web(event: FoodTruckEvent) -> dict:
+    """Convert a FoodTruckEvent to a web-friendly dict."""
+    web_event = {
+        "date": event.date.isoformat(),
+        "vendor": event.food_truck_name,
+        "location": event.brewery_name,
+        "location_url": event.brewery_url,
+        "start_time": (
+            format_time_with_timezone(event.start_time, include_timezone=True)
+            if event.start_time
+            else None
+        ),
+        "end_time": (
+            format_time_with_timezone(event.end_time, include_timezone=True)
+            if event.end_time
+            else None
+        ),
+        "start_time_raw": (
+            event.start_time.strftime("%I:%M %p").lstrip("0")
+            if event.start_time
+            else None
+        ),
+        "end_time_raw": (
+            event.end_time.strftime("%I:%M %p").lstrip("0")
+            if event.end_time
+            else None
+        ),
+        "description": event.description,
+        "timezone": "PT",
+        "category": event.category,
+    }
+
+    if event.ai_generated_name:
+        web_event["extraction_method"] = "vision"
+        web_event["vendor"] = f"{event.food_truck_name} 🖼️🤖"
+
+    return web_event
+
+
 async def generate_web_data(
     events: List[FoodTruckEvent], error_messages: Optional[List[str]] = None
 ) -> dict:
     """Generate web-friendly JSON data from events with Pacific timezone information."""
-    web_events = []
-
-    for event in events:
-        # Convert event to web format with Pacific timezone indicators
-        web_event = {
-            "date": event.date.isoformat(),
-            "vendor": event.food_truck_name,
-            "location": event.brewery_name,
-            "location_url": event.brewery_url,
-            # Format times with Pacific timezone indicators
-            "start_time": (
-                format_time_with_timezone(event.start_time, include_timezone=True)
-                if event.start_time
-                else None
-            ),
-            "end_time": (
-                format_time_with_timezone(event.end_time, include_timezone=True)
-                if event.end_time
-                else None
-            ),
-            # Also include raw time strings without timezone for backward compatibility
-            "start_time_raw": (
-                event.start_time.strftime("%I:%M %p").lstrip("0")
-                if event.start_time
-                else None
-            ),
-            "end_time_raw": (
-                event.end_time.strftime("%I:%M %p").lstrip("0")
-                if event.end_time
-                else None
-            ),
-            "description": event.description,
-            "timezone": "PT",  # Explicit timezone indicator
-        }
-
-        # Add AI extraction indicator
-        if event.ai_generated_name:
-            web_event["extraction_method"] = "vision"
-            web_event["vendor"] = f"{event.food_truck_name} 🖼️🤖"
-
-        web_events.append(web_event)
+    truck_events = [_event_to_web(e) for e in events if e.category == "food-truck"]
+    other_events = [_event_to_web(e) for e in events if e.category != "food-truck"]
 
     unique_error_messages = list(dict.fromkeys(error_messages or []))
 
-    # Generate haiku for today's food trucks
-    haiku = await _generate_haiku_for_today(events)
+    # Generate haiku only from food truck events
+    food_truck_events = [e for e in events if e.category == "food-truck"]
+    haiku = await _generate_haiku_for_today(food_truck_events)
 
     return {
-        "events": web_events,
+        "truck_events": truck_events,
+        "other_events": other_events,
         "updated": datetime.now(timezone.utc).isoformat(),
-        "total_events": len(web_events),
-        "timezone": "PT",  # Global timezone indicator
+        "total_events": len(truck_events),
+        "timezone": "PT",
         "timezone_note": "All event times are in Pacific Time (PT), which includes both PST and PDT depending on the date.",
         "errors": unique_error_messages,
-        "haiku": haiku,  # AI-generated haiku for today's trucks
+        "haiku": haiku,
     }
 
 

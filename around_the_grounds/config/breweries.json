@@ -13,7 +13,7 @@
     },
     {
       "key": "broadview-taphouse",
-      "name": "Broadview Taphouse",
+      "name": "Broadview Tap House",
       "url": "https://www.seattlefoodtruck.com/schedule/broadview-tap-house",
       "website_url": "https://www.broadviewtaphouse.com/",
       "parser_config": {
@@ -21,6 +21,15 @@
         "api_type": "seattle_food_truck",
         "location_id": 682,
         "date_format": "M-D-YY"
+      }
+    },
+    {
+      "key": "broadview-taphouse-events",
+      "name": "Broadview Tap House",
+      "url": "https://calendar.google.com/calendar/ical/bvtaphouseevents%40gmail.com/public/basic.ics",
+      "website_url": "https://www.broadviewtaphouse.com/event-calendar",
+      "parser_config": {
+        "note": "Public Google Calendar iCal feed for events"
       }
     },
     {
@@ -32,13 +41,15 @@
         "note": "Squarespace events collection JSON",
         "api_type": "squarespace_events",
         "exclude_patterns": [
-          "Trivia",
-          "Knit Nite",
-          "Run Club",
-          "MOM'S NIGHT",
-          "DAD'S NIGHT",
           "food trucks"
-        ]
+        ],
+        "category_patterns": {
+          "Trivia": "trivia",
+          "Knit Nite": "community",
+          "Run Club": "community",
+          "MOM'S NIGHT": "community",
+          "DAD'S NIGHT": "community"
+        }
       }
     },
     {
@@ -70,11 +81,13 @@
         "note": "Squarespace events collection JSON",
         "api_type": "squarespace_events",
         "exclude_patterns": [
-          "Trivia",
-          "GAME NIGHT",
-          "MEET-N-GREET",
           "Calendar"
-        ]
+        ],
+        "category_patterns": {
+          "Trivia": "trivia",
+          "GAME NIGHT": "community",
+          "MEET-N-GREET": "community"
+        }
       }
     }
   ]

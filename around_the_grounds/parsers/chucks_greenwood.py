@@ -7,6 +7,7 @@ Handles redirects, filters events, and processes meal categories.
 
 import csv
 import io
+import re
 from datetime import datetime
 from typing import List, Optional, Tuple
 
@@ -126,15 +127,21 @@ class ChucksGreenwoodParser(BaseParser):
         if not any(cell.strip() for cell in row[:7]):
             return None
 
-        # Filter for food truck events only (Column F)
+        # Filter for food truck and general event rows (Column F)
         event_type = row[5].strip() if len(row) > 5 else ""
-        if event_type != "Food Truck":
+        if event_type not in ("Food Truck", "Event"):
             return None
 
         # Extract event name (Column G)
         event_name = row[6].strip() if len(row) > 6 else ""
         if not event_name:
             return None
+
+        # Determine category
+        if event_type == "Event":
+            category = "trivia" if re.search(r"trivia", event_name, re.IGNORECASE) else "community"
+        else:
+            category = "food-truck"
 
         # Parse vendor name and meal type from event name
         food_truck_name, meal_type = self._extract_vendor_and_meal(event_name)
@@ -158,6 +165,7 @@ class ChucksGreenwoodParser(BaseParser):
             end_time=end_time,
             description=meal_type.capitalize() if meal_type else None,
             ai_generated_name=False,
+            category=category,
         )
 
     def _extract_vendor_and_meal(self, event_name: str) -> Tuple[Optional[str], Optional[str]]:

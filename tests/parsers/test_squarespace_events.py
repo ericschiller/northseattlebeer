@@ -26,7 +26,11 @@ class TestSquarespaceEventsParser:
             parser_config={
                 "note": "Squarespace events collection JSON",
                 "api_type": "squarespace_events",
-                "exclude_patterns": ["Trivia", "Knit Nite"]
+                "exclude_patterns": ["food trucks"],
+                "category_patterns": {
+                    "Trivia": "trivia",
+                    "Knit Nite": "community",
+                },
             },
         )
 
@@ -77,21 +81,28 @@ class TestSquarespaceEventsParser:
             async with aiohttp.ClientSession() as session:
                 events = await parser.parse(session)
 
-                # Should have 2 events (Kathmandu MoMoCha and Oskars Pizza)
-                # Knit Nite and Trivia should be excluded
-                assert len(events) == 2
-                
+                # Should have 4 events — Trivia/KnitNite are now categorized, not excluded
+                assert len(events) == 4
+
                 titles = [e.food_truck_name for e in events]
                 assert "Kathmandu MoMoCha" in titles
                 assert "Oskars Pizza" in titles
-                assert "Ridgecrest Knit Nite" not in titles
-                assert "Trivia at Drumlin" not in titles
+                assert "Ridgecrest Knit Nite" in titles
+                assert "Trivia at Drumlin" in titles
 
-                # Check event details
-                event = next(e for e in events if e.food_truck_name == "Kathmandu MoMoCha")
-                assert event.brewery_key == "ridgecrest-pub"
-                assert event.date is not None
-                assert isinstance(event.date, datetime)
+                # Check food truck category
+                truck = next(e for e in events if e.food_truck_name == "Kathmandu MoMoCha")
+                assert truck.brewery_key == "ridgecrest-pub"
+                assert truck.date is not None
+                assert isinstance(truck.date, datetime)
+                assert truck.category == "food-truck"
+
+                # Check non-truck categories
+                knit = next(e for e in events if e.food_truck_name == "Ridgecrest Knit Nite")
+                assert knit.category == "community"
+
+                trivia = next(e for e in events if e.food_truck_name == "Trivia at Drumlin")
+                assert trivia.category == "trivia"
 
     @pytest.mark.asyncio
     async def test_parse_empty_items(self, parser: SquarespaceEventsParser) -> None:

@@ -14,6 +14,7 @@ class FoodTruckEvent:
     description: Optional[str] = None
     ai_generated_name: bool = False
     brewery_url: Optional[str] = None
+    category: str = "food-truck"
 
     def __str__(self) -> str:
         date_str = self.date.strftime("%Y-%m-%d") if self.date else "None"

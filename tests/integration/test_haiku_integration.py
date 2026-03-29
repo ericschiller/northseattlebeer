@@ -94,8 +94,8 @@ class TestHaikuIntegration:
         # Verify haiku is None but data is still valid
         assert "haiku" in web_data
         assert web_data["haiku"] is None
-        assert "events" in web_data
-        assert len(web_data["events"]) == 2
+        assert "truck_events" in web_data
+        assert len(web_data["truck_events"]) == 2
 
     @pytest.mark.asyncio
     @patch("around_the_grounds.main.HaikuGenerator")
@@ -109,8 +109,8 @@ class TestHaikuIntegration:
         # Verify no haiku was generated
         assert "haiku" in web_data
         assert web_data["haiku"] is None
-        assert "events" in web_data
-        assert len(web_data["events"]) == 1
+        assert "truck_events" in web_data
+        assert len(web_data["truck_events"]) == 1
 
     @pytest.mark.asyncio
     @patch("around_the_grounds.utils.weather.fetch_weather", new_callable=AsyncMock, return_value=("53°F, overcast, light breeze, 66% humidity", "Afternoon"))
@@ -167,7 +167,8 @@ class TestHaikuIntegration:
         web_data = await generate_web_data(sample_events_today, error_messages=["Test error"])
 
         # Verify all expected fields are present
-        assert "events" in web_data
+        assert "truck_events" in web_data
+        assert "other_events" in web_data
         assert "updated" in web_data
         assert "total_events" in web_data
         assert "timezone" in web_data
@@ -176,7 +177,7 @@ class TestHaikuIntegration:
         assert "haiku" in web_data
 
         # Verify field values
-        assert len(web_data["events"]) == 2
+        assert len(web_data["truck_events"]) == 2
         assert web_data["total_events"] == 2
         assert web_data["timezone"] == "PT"
         assert "Test error" in web_data["errors"]
@@ -195,4 +196,5 @@ class TestHaikuIntegration:
         assert "haiku" in web_data
         assert web_data["haiku"] is None
         assert web_data["total_events"] == 0
-        assert len(web_data["events"]) == 0
+        assert len(web_data["truck_events"]) == 0
+        assert len(web_data["other_events"]) == 0
