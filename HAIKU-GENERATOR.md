@@ -53,6 +53,10 @@ at Urban Family 🍺
 export ANTHROPIC_API_KEY="your-api-key"
 
 # Optional: If not set, uses the same key as vision analysis
+
+# Optional: Weather location (defaults to Ballard, Seattle)
+export WEATHER_LOCATION_LAT="47.6762"   # Latitude for weather forecasts
+export WEATHER_LOCATION_LON="-122.3851" # Longitude for weather forecasts
 ```
 
 ### Enabling/Disabling

@@ -1,6 +1,8 @@
-"""Fetch weather forecasts from Open-Meteo for Ballard, Seattle."""
+"""Fetch weather forecasts from Open-Meteo."""
 
 import logging
+import os
+from collections import Counter
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -10,9 +12,12 @@ from .timezone_utils import now_in_pacific_naive
 
 logger = logging.getLogger(__name__)
 
-# Ballard, Seattle coordinates
-BALLARD_LAT = 47.6762
-BALLARD_LON = -122.3851
+# Default coordinates (Ballard, Seattle)
+_DEFAULT_LAT = 47.6762
+_DEFAULT_LON = -122.3851
+
+LOCATION_LAT = float(os.getenv("WEATHER_LOCATION_LAT", str(_DEFAULT_LAT)))
+LOCATION_LON = float(os.getenv("WEATHER_LOCATION_LON", str(_DEFAULT_LON)))
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 
@@ -134,25 +139,47 @@ def _summarize_hours(
         sum(precip_probs) / len(precip_probs) if precip_probs else 0
     )
 
-    # Use the most severe weather code in the window, but downgrade
-    # precipitation codes to the best non-precipitation code if the
-    # average precipitation probability is below the threshold.
-    worst_code = max(codes)
-    if (
-        worst_code in _PRECIP_CODES
-        and avg_precip_prob < _PRECIP_PROBABILITY_THRESHOLD
-    ):
+    # Pick the most representative weather code for the window:
+    # 1. If avg precipitation probability is below threshold, filter out
+    #    precipitation codes (drizzle, rain, snow, etc.) to avoid
+    #    overreporting unlikely conditions.
+    # 2. Use the most frequent (modal) code — this reflects what you'd
+    #    actually experience across the window, rather than amplifying a
+    #    single extreme hour.
+    # 3. Break ties by severity (highest code wins).
+    effective_codes = codes
+    if avg_precip_prob < _PRECIP_PROBABILITY_THRESHOLD:
         non_precip = [c for c in codes if c not in _PRECIP_CODES]
-        worst_code = max(non_precip) if non_precip else 3  # default to overcast
+        if non_precip:
+            effective_codes = non_precip
+        else:
+            effective_codes = [3]  # default to overcast
 
-    condition = WMO_CODES.get(worst_code, "unknown conditions")
+    # Most frequent code, ties broken by highest value (most severe)
+    code_counts = Counter(effective_codes)
+    max_count = max(code_counts.values())
+    most_common = [code for code, count in code_counts.items() if count == max_count]
+    representative_code = max(most_common)
+
+    condition = WMO_CODES.get(representative_code, "unknown conditions")
     wind_desc = _describe_wind(avg_wind)
+
+    # Include precipitation probability for precipitation conditions
+    if representative_code in _PRECIP_CODES and avg_precip_prob > 0:
+        prob_pct = round(avg_precip_prob)
+        return (
+            f"{avg_temp}\u00b0F, chance of {condition} ({prob_pct}%), "
+            f"{wind_desc}, {avg_humidity}% humidity"
+        )
 
     return f"{avg_temp}\u00b0F, {condition}, {wind_desc}, {avg_humidity}% humidity"
 
 
 async def fetch_weather() -> Optional[tuple[str, str]]:
-    """Fetch weather forecast for Ballard, Seattle.
+    """Fetch weather forecast for the configured location.
+
+    Location is controlled by WEATHER_LOCATION_LAT and WEATHER_LOCATION_LON
+    environment variables (defaults to Ballard, Seattle).
 
     Returns:
         Tuple of (weather_summary, time_of_day) or None if the fetch fails.
@@ -163,8 +190,8 @@ async def fetch_weather() -> Optional[tuple[str, str]]:
     target_date, time_of_day, target_hours = _get_time_window_and_date(now)
 
     params = {
-        "latitude": BALLARD_LAT,
-        "longitude": BALLARD_LON,
+        "latitude": LOCATION_LAT,
+        "longitude": LOCATION_LON,
         "hourly": "temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation_probability",
         "temperature_unit": "fahrenheit",
         "timezone": "America/Los_Angeles",

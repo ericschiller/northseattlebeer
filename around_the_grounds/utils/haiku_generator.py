@@ -35,7 +35,9 @@ Create a haiku (5-7-5 syllable structure) that captures the essence of today's f
 3. Evoke the atmosphere of gathering at local breweries and food spots
 4. Balance concrete sensory details with weather-driven imagery
 
-Stay faithful to what's described — do not invent or embellish sensory details beyond what the data supports. If it's not raining, don't say "damp." If there's no fog, don't say "misty." If humidity is moderate, don't exaggerate it. Only describe conditions that are clearly present in the weather provided.
+Stay faithful to what's described — do not invent or embellish sensory details beyond what the data supports. If it's not raining, don't say "damp." If there's no fog, don't say "misty." If humidity is moderate, don't exaggerate it. Only describe conditions that are clearly present in the weather provided. Don't invent what people are wearing or other details not in the data.
+
+When precipitation is described as a "chance" with a percentage, treat it as a possibility — not a certainty. Capture the anticipation or threat of weather rather than stating it as fact (e.g. "skies threaten rain" or "clouds may break" rather than "rain soaks the line").
 
 Use the food truck's actual name — don't riff on or pun on the name.
 

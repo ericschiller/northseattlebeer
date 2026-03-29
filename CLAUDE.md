@@ -268,7 +268,7 @@ See [ADDING-BREWERIES.md](./ADDING-BREWERIES.md)
 
 ## Haiku Generator
 
-The system includes AI-powered haiku generation (using `claude-sonnet-4-6` at `temperature=0.85`) that creates contextual, poetic descriptions of daily food truck scenes. Haikus are grounded in real-time weather data fetched from the Open-Meteo API (free, no API key required) for Ballard, Seattle. Weather data is required -- if the weather fetch fails, no haiku is generated.
+The system includes AI-powered haiku generation (using `claude-sonnet-4-6` at `temperature=0.85`) that creates contextual, poetic descriptions of daily food truck scenes. Haikus are grounded in real-time weather data fetched from the Open-Meteo API (free, no API key required). The weather location defaults to Ballard, Seattle but is configurable via `WEATHER_LOCATION_LAT` and `WEATHER_LOCATION_LON` environment variables. Weather data is required -- if the weather fetch fails, no haiku is generated.
 
 **Time-based weather logic** selects the appropriate forecast based on current Pacific Time:
 - Before 6pm PT: uses afternoon forecast for today

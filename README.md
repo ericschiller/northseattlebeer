@@ -225,6 +225,10 @@ docker logs -f around-the-grounds-worker
 # Optional: AI features (vision analysis + haiku generation)
 ANTHROPIC_API_KEY=your-anthropic-api-key  # Enables vendor name extraction from images and daily haiku generation
 
+# Optional: Weather location for haiku generation (defaults to Ballard, Seattle)
+WEATHER_LOCATION_LAT=47.6762   # Latitude for weather forecasts
+WEATHER_LOCATION_LON=-122.3851 # Longitude for weather forecasts
+
 # Required for web deployment
 GITHUB_APP_ID=123456
 GITHUB_CLIENT_ID=your-github-client-id
@@ -242,7 +246,7 @@ TEMPORAL_API_KEY=your-temporal-api-key
 - Template placeholders: `{date}`, `{truck_name}`, `{brewery_name}`, `{events_summary}`, `{weather}`, `{time_of_day}`
 - Model: `claude-sonnet-4-6`
 
-**Weather integration**: The haiku generator fetches real-time weather from the [Open-Meteo API](https://open-meteo.com/) (free, no API key needed) for Ballard, Seattle. Weather conditions are woven into the generated haikus for more authentic, grounded poetry. Time-based logic selects the appropriate forecast window:
+**Weather integration**: The haiku generator fetches real-time weather from the [Open-Meteo API](https://open-meteo.com/) (free, no API key needed). By default, weather is fetched for Ballard, Seattle, but the location is configurable via environment variables (see below). Weather conditions are woven into the generated haikus for more authentic, grounded poetry. Time-based logic selects the appropriate forecast window:
 - Before 6pm PT: uses afternoon forecast
 - 6-9pm PT: uses evening forecast
 - 9pm+ PT: uses next day's afternoon forecast

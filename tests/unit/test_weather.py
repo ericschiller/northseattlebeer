@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, Mock, patch
 from aioresponses import aioresponses
 
 from around_the_grounds.utils.weather import (
-    BALLARD_LAT,
-    BALLARD_LON,
+    LOCATION_LAT,
+    LOCATION_LON,
     OPEN_METEO_URL,
     WMO_CODES,
     _describe_wind,
@@ -265,6 +265,34 @@ class TestSummarizeHours:
         assert result is not None
         assert "slight rain" not in result
         assert "overcast" in result  # Falls back to WMO code 3
+
+    def test_summarize_uses_modal_code_not_max(self) -> None:
+        """Test that the most frequent code wins over the most severe."""
+        # 3 hours of slight rain (61), 1 hour of slight snowfall (71)
+        # Mode is 61 (rain), max would be 71 (snow)
+        hourly = self._make_hourly_data(
+            hours=list(range(24)),
+            codes=[0] * 14 + [61, 61, 61, 71] + [0] * 6,
+            precip_probs=[0] * 14 + [80, 80, 80, 80] + [0] * 6,
+        )
+
+        result = _summarize_hours(hourly, "2026-03-28", [14, 15, 16, 17])
+
+        assert result is not None
+        assert "slight rain" in result  # modal code 61, not snowfall 71
+
+    def test_summarize_modal_tie_breaks_by_severity(self) -> None:
+        """Test that ties in frequency are broken by severity (highest code)."""
+        # 2 hours overcast (3), 2 hours partly cloudy (2) — tie, 3 wins
+        hourly = self._make_hourly_data(
+            hours=list(range(24)),
+            codes=[0] * 14 + [2, 2, 3, 3] + [0] * 6,
+        )
+
+        result = _summarize_hours(hourly, "2026-03-28", [14, 15, 16, 17])
+
+        assert result is not None
+        assert "overcast" in result  # code 3 wins the tie
 
     def test_summarize_no_matching_hours(self) -> None:
         """Test when no hours match the target date."""
@@ -550,3 +578,26 @@ class TestFetchWeather:
             result = await fetch_weather()
 
         assert result is None
+
+
+class TestLocationConfig:
+    """Test that weather location coordinates are configurable."""
+
+    def test_default_location_is_ballard(self) -> None:
+        """Default coordinates should be Ballard, Seattle."""
+        assert LOCATION_LAT == 47.6762
+        assert LOCATION_LON == -122.3851
+
+    @patch.dict("os.environ", {"WEATHER_LOCATION_LAT": "40.7128", "WEATHER_LOCATION_LON": "-74.0060"})
+    def test_location_configurable_via_env(self) -> None:
+        """Coordinates should be overridable via environment variables."""
+        import importlib
+        import around_the_grounds.utils.weather as weather_mod
+
+        importlib.reload(weather_mod)
+        try:
+            assert weather_mod.LOCATION_LAT == 40.7128
+            assert weather_mod.LOCATION_LON == -74.0060
+        finally:
+            # Restore defaults
+            importlib.reload(weather_mod)
