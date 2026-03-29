@@ -218,27 +218,32 @@ class DeploymentActivities:
                     capture_output=True,
                 )
 
-                # Copy template files from public_template to cloned repo
-                public_template_dir = Path.cwd() / "public_template"
-                target_public_dir = repo_dir / "public"
+                # Copy frontend files to cloned repo
+                frontend_src = Path.cwd() / "frontend"
+                frontend_dest = repo_dir / "frontend"
 
-                activity.logger.info(
-                    f"Copying template files from {public_template_dir}"
-                )
-                shutil.copytree(
-                    public_template_dir, target_public_dir, dirs_exist_ok=True
-                )
+                activity.logger.info(f"Copying frontend files from {frontend_src}")
+                # We skip node_modules and .nuxt
+                def ignore_node_modules(path, names):
+                    return [n for n in names if n in ["node_modules", ".nuxt", ".output", "dist"]]
 
-                # Write generated web data to cloned repository
-                json_path = target_public_dir / "data.json"
+                shutil.copytree(frontend_src, frontend_dest, dirs_exist_ok=True, ignore=ignore_node_modules)
+
+                # Copy root files needed for deployment (vercel.json, etc.)
+                for f in ["vercel.json", "package.json"]:
+                    if (Path.cwd() / f).exists():
+                        shutil.copy2(Path.cwd() / f, repo_dir / f)
+
+                # Write generated web data to frontend public directory in the repo
+                json_path = frontend_dest / "public" / "data.json"
                 with open(json_path, "w") as f:
                     json.dump(web_data, f, indent=2)
 
                 activity.logger.info(f"Generated web data file: {json_path}")
 
-                # Add all files in public directory
+                # Add all files
                 subprocess.run(
-                    ["git", "add", "public/"],
+                    ["git", "add", "."],
                     cwd=repo_dir,
                     check=True,
                     capture_output=True,

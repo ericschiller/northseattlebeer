@@ -45,7 +45,8 @@ def load_brewery_config(config_path: Optional[str] = None) -> List[Brewery]:
             key=brewery_data["key"],
             name=brewery_data["name"],
             url=brewery_data["url"],
-            parser_config=brewery_data.get("parser_config", {}),
+            website_url=brewery_data.get("website_url"),
+            parser_config=brewery_data.get("parser_config"),
         )
         breweries.append(brewery)
 
@@ -168,6 +169,7 @@ async def generate_web_data(
             "date": event.date.isoformat(),
             "vendor": event.food_truck_name,
             "location": event.brewery_name,
+            "location_url": event.brewery_url,
             # Format times with Pacific timezone indicators
             "start_time": (
                 format_time_with_timezone(event.start_time, include_timezone=True)
@@ -282,23 +284,32 @@ def _deploy_with_github_auth(web_data: dict, repository_url: str) -> bool:
                 capture_output=True,
             )
 
-            # Copy template files from public_template to cloned repo
-            public_template_dir = Path.cwd() / "public_template"
-            target_public_dir = repo_dir / "public"
+            # Copy frontend files to cloned repo
+            frontend_src = Path.cwd() / "frontend"
+            frontend_dest = repo_dir / "frontend"
 
-            print(f"📋 Copying template files from {public_template_dir}...")
-            shutil.copytree(public_template_dir, target_public_dir, dirs_exist_ok=True)
+            print(f"📋 Copying frontend files from {frontend_src}...")
+            # We skip node_modules and .nuxt
+            def ignore_node_modules(path, names):
+                return [n for n in names if n in ["node_modules", ".nuxt", ".output", "dist"]]
 
-            # Write generated web data to cloned repository
-            json_path = target_public_dir / "data.json"
+            shutil.copytree(frontend_src, frontend_dest, dirs_exist_ok=True, ignore=ignore_node_modules)
+
+            # Copy root files needed for deployment (vercel.json, etc.)
+            for f in ["vercel.json", "package.json"]:
+                if (Path.cwd() / f).exists():
+                    shutil.copy2(Path.cwd() / f, repo_dir / f)
+
+            # Write generated web data to frontend public directory in the repo
+            json_path = frontend_dest / "public" / "data.json"
             with open(json_path, "w") as f:
                 json.dump(web_data, f, indent=2)
 
             print(f"📝 Updated data.json with {web_data.get('total_events', 0)} events")
 
-            # Add all files in public directory
+            # Add all files
             subprocess.run(
-                ["git", "add", "public/"], cwd=repo_dir, check=True, capture_output=True
+                ["git", "add", "."], cwd=repo_dir, check=True, capture_output=True
             )
 
             # Check if there are changes to commit
@@ -356,7 +367,7 @@ def _deploy_with_github_auth(web_data: dict, repository_url: str) -> bool:
 async def preview_locally(
     events: List[FoodTruckEvent], errors: Optional[List[ScrapingError]] = None
 ) -> bool:
-    """Generate web files locally in public/ directory for preview."""
+    """Generate web files locally in frontend/public/ directory for preview."""
     import shutil
 
     try:
@@ -366,31 +377,25 @@ async def preview_locally(
         web_data = await generate_web_data(events, error_messages)
 
         # Set up paths
-        public_template_dir = Path.cwd() / "public_template"
-        local_public_dir = Path.cwd() / "public"
+        frontend_dir = Path.cwd() / "frontend"
+        public_dir = frontend_dir / "public"
 
-        # Ensure public_template exists
-        if not public_template_dir.exists():
-            print(f"❌ Template directory not found: {public_template_dir}")
+        # Ensure frontend directory exists
+        if not frontend_dir.exists():
+            print(f"❌ Frontend directory not found: {frontend_dir}")
             return False
 
-        # Create or clear public directory
-        if local_public_dir.exists():
-            shutil.rmtree(local_public_dir)
-
-        # Copy template files to public/
-        print(f"📋 Copying template files from {public_template_dir}...")
-        shutil.copytree(public_template_dir, local_public_dir)
-
-        # Write generated web data to local public directory
-        json_path = local_public_dir / "data.json"
+        # Write generated web data to frontend public directory
+        json_path = public_dir / "data.json"
         with open(json_path, "w") as f:
             json.dump(web_data, f, indent=2)
 
-        print(f"✅ Generated local preview: {len(events)} events")
-        print(f"📁 Preview files in: {local_public_dir}")
-        print("🌐 To serve locally: cd public && python -m http.server 8000")
-        print("🔗 Then visit: http://localhost:8000")
+        print(f"✅ Generated local data: {len(events)} events")
+        print(f"📝 Updated {json_path}")
+        print("\n🌐 To run the Nuxt dev server:")
+        print("   cd frontend && npm run dev")
+        print("\n🏗️  To generate the static site:")
+        print("   cd frontend && npm run generate")
 
         return True
 

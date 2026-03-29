@@ -17,9 +17,9 @@ This repository contains the **scraping and scheduling engine**. When run with `
 
 1. **Scrapes** brewery websites for food truck schedules
 2. **Generates AI content**: Creates daily haikus and extracts vendor names from images (when `ANTHROPIC_API_KEY` is set)
-3. **Copies** web templates from `public_template/` to target repository
-4. **Generates** static site data (`data.json`) in target repository
-5. **Target repo** is automatically deployed by platforms like Vercel
+3. **Generates** static site data (`data.json`) in `frontend/public/`
+4. **Builds** the Nuxt frontend (`npm run generate`)
+5. **Target repo** is updated with the new data and code, and automatically deployed by platforms like Vercel
 
 **Two-Repository Architecture:**
 - **Source repo** (this one): Contains scraping code, runs workers, web templates
@@ -101,47 +101,19 @@ This will copy web templates and generate fresh data in your target repository, 
 Before deploying, you can preview changes locally:
 
 ```bash
-# Generate web files locally for testing
+# 1. Generate web data locally
 uv run around-the-grounds --preview
 
-# Serve locally and view in browser
-cd public && python -m http.server 8000
-# Visit: http://localhost:8000
-
-# Automated testing methods:
-# Test data.json endpoint
-cd public && timeout 10s python -m http.server 8000 > /dev/null 2>&1 & sleep 1 && curl -s http://localhost:8000/data.json | head -20 && pkill -f "python -m http.server" || true
-
-# Test for specific event data (e.g., Sunday events)
-cd public && timeout 10s python -m http.server 8000 > /dev/null 2>&1 & sleep 1 && curl -s http://localhost:8000/data.json | grep "2025-07-06" && pkill -f "python -m http.server" || true
-
-# Test full homepage (basic connectivity)
-cd public && timeout 10s python -m http.server 8000 > /dev/null 2>&1 & sleep 1 && curl -s http://localhost:8000/ > /dev/null && echo "✅ Homepage loads" && pkill -f "python -m http.server" || echo "❌ Homepage failed"
-
-# Test JavaScript rendering (requires Node.js/puppeteer - optional)
-# npm install -g puppeteer
-cd public && timeout 15s python -m http.server 8000 > /dev/null 2>&1 & sleep 2 && \
-  node -e "
-const puppeteer = require('puppeteer');
-(async () => {
-  const browser = await puppeteer.launch({headless: true});
-  const page = await browser.newPage();
-  await page.goto('http://localhost:8000');
-  await page.waitForSelector('.day-section', {timeout: 5000});
-  const dayHeaders = await page.$$eval('.day-header', els => els.map(el => el.textContent));
-  console.log('✅ Rendered days:', dayHeaders.slice(0,2).join(', '));
-  const eventCount = await page.$$eval('.truck-item', els => els.length);
-  console.log('✅ Rendered events:', eventCount);
-  await browser.close();
-})().catch(e => console.log('❌ JS render test failed:', e.message));
-" && pkill -f "python -m http.server" || echo "❌ Install puppeteer for JS testing: npm install -g puppeteer"
+# 2. Run the Nuxt development server
+cd frontend
+npm install
+npm run dev
+# Visit: http://localhost:3000
 ```
 
 **What `--preview` does:**
 1. Scrapes fresh data from all brewery websites
-2. Copies templates from `public_template/` to `public/`
-3. Generates `data.json` with current food truck data
-4. Creates complete website in `public/` directory (git-ignored)
+2. Generates `data.json` in `frontend/public/`
 
 This allows you to test web interface changes, verify data accuracy, and debug issues before deploying to production.
 

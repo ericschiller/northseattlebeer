@@ -133,6 +133,9 @@ class ScraperCoordinator:
                     f"Scraping {brewery.name} (attempt {attempt + 1}/{self.max_retries})..."
                 )
                 events = await parser.parse(session)
+                # Assign brewery_url to all events
+                for event in events:
+                    event.brewery_url = brewery.website_url
                 self.logger.info(f"Found {len(events)} events for {brewery.name}")
                 return events, None
 

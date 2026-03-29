@@ -1,4 +1,4 @@
-"""Tests for Saleh's Corner parser."""
+"""Tests for Seattle Food Truck parser."""
 
 import re
 from datetime import datetime
@@ -10,11 +10,11 @@ from aioresponses import aioresponses
 from freezegun import freeze_time
 
 from around_the_grounds.models import Brewery
-from around_the_grounds.parsers.salehs_corner import SalehsCornerParser
+from around_the_grounds.parsers.seattle_food_truck import SeattleFoodTruckParser
 
 
-class TestSalehsCornerParser:
-    """Test the SalehsCornerParser class."""
+class TestSeattleFoodTruckParser:
+    """Test the SeattleFoodTruckParser class."""
 
     @pytest.fixture
     def brewery(self) -> Brewery:
@@ -32,9 +32,24 @@ class TestSalehsCornerParser:
         )
 
     @pytest.fixture
-    def parser(self, brewery: Brewery) -> SalehsCornerParser:
+    def broadview_brewery(self) -> Brewery:
+        """Create a test brewery for Broadview Taphouse."""
+        return Brewery(
+            key="broadview-taphouse",
+            name="Broadview Taphouse",
+            url="https://www.seattlefoodtruck.com/schedule/broadview-tap-house",
+            parser_config={
+                "note": "Seattle Food Truck API with structured JSON responses",
+                "api_type": "seattle_food_truck",
+                "location_id": 682,
+                "date_format": "M-D-YY",
+            },
+        )
+
+    @pytest.fixture
+    def parser(self, brewery: Brewery) -> SeattleFoodTruckParser:
         """Create a parser instance."""
-        return SalehsCornerParser(brewery)
+        return SeattleFoodTruckParser(brewery)
 
     @pytest.fixture
     def sample_api_response(self) -> Dict[str, Any]:
@@ -114,7 +129,7 @@ class TestSalehsCornerParser:
     @pytest.mark.asyncio
     @freeze_time("2025-08-01")
     async def test_parse_sample_api_data(
-        self, parser: SalehsCornerParser, sample_api_response: Dict[str, Any]
+        self, parser: SeattleFoodTruckParser, sample_api_response: Dict[str, Any]
     ) -> None:
         """Test parsing sample API data successfully."""
         with aioresponses() as m:
@@ -138,18 +153,36 @@ class TestSalehsCornerParser:
                 assert event1.date.day == 2
                 assert event1.start_time is not None
                 assert event1.end_time is not None
-                assert event1.description == "Cuisine: Asian, Thai, Vegetarian"
+                assert event1.description == "Asian, Thai, Vegetarian"
                 assert not event1.ai_generated_name
 
                 # Check second event
                 event2 = events[1]
                 assert event2.food_truck_name == "MOMO Express"
-                assert event2.description == "Cuisine: Asian, BBQ, Sandwiches"
+                assert events[1].description == "Asian, BBQ, Sandwiches"
+
+    @pytest.mark.asyncio
+    @freeze_time("2025-08-01")
+    async def test_parse_broadview_taphouse(
+        self, broadview_brewery: Brewery, sample_api_response: Dict[str, Any]
+    ) -> None:
+        """Test parsing Broadview Taphouse specifically."""
+        parser = SeattleFoodTruckParser(broadview_brewery)
+        assert parser.location_id == 682
+
+        with aioresponses() as m:
+            url_pattern = re.compile(re.escape(parser.BASE_URL) + r".*")
+            m.get(url_pattern, status=200, payload=sample_api_response)
+
+            async with aiohttp.ClientSession() as session:
+                events = await parser.parse(session)
+                assert len(events) == 2
+                assert events[0].brewery_key == "broadview-taphouse"
 
     @pytest.mark.asyncio
     @freeze_time("2025-08-01")
     async def test_parse_empty_events(
-        self, parser: SalehsCornerParser, empty_api_response: Dict[str, Any]
+        self, parser: SeattleFoodTruckParser, empty_api_response: Dict[str, Any]
     ) -> None:
         """Test parsing when no events are found."""
         with aioresponses() as m:
@@ -163,7 +196,7 @@ class TestSalehsCornerParser:
     # ERROR HANDLING TESTS
 
     @pytest.mark.asyncio
-    async def test_parse_network_error(self, parser: SalehsCornerParser) -> None:
+    async def test_parse_network_error(self, parser: SeattleFoodTruckParser) -> None:
         """Test handling of network errors."""
         with aioresponses() as m:
             url_pattern = re.compile(re.escape(parser.BASE_URL) + r".*")
@@ -171,12 +204,12 @@ class TestSalehsCornerParser:
 
             async with aiohttp.ClientSession() as session:
                 with pytest.raises(
-                    ValueError, match="Network error fetching Saleh's Corner API"
+                    ValueError, match="Network error fetching Seattle Food Truck API"
                 ):
                     await parser.parse(session)
 
     @pytest.mark.asyncio
-    async def test_parse_http_404_error(self, parser: SalehsCornerParser) -> None:
+    async def test_parse_http_404_error(self, parser: SeattleFoodTruckParser) -> None:
         """Test handling of 404 HTTP error."""
         with aioresponses() as m:
             url_pattern = re.compile(re.escape(parser.BASE_URL) + r".*")
@@ -189,7 +222,7 @@ class TestSalehsCornerParser:
                     await parser.parse(session)
 
     @pytest.mark.asyncio
-    async def test_parse_http_429_rate_limit(self, parser: SalehsCornerParser) -> None:
+    async def test_parse_http_429_rate_limit(self, parser: SeattleFoodTruckParser) -> None:
         """Test handling of 429 rate limiting error."""
         with aioresponses() as m:
             url_pattern = re.compile(re.escape(parser.BASE_URL) + r".*")
@@ -198,12 +231,12 @@ class TestSalehsCornerParser:
             async with aiohttp.ClientSession() as session:
                 with pytest.raises(
                     ValueError,
-                    match="Rate limited \\(429\\): Too many requests to Saleh's API",
+                    match="Rate limited \\(429\\): Too many requests to Seattle Food Truck API",
                 ):
                     await parser.parse(session)
 
     @pytest.mark.asyncio
-    async def test_parse_http_500_error(self, parser: SalehsCornerParser) -> None:
+    async def test_parse_http_500_error(self, parser: SeattleFoodTruckParser) -> None:
         """Test handling of 500 server error."""
         with aioresponses() as m:
             url_pattern = re.compile(re.escape(parser.BASE_URL) + r".*")
@@ -214,7 +247,7 @@ class TestSalehsCornerParser:
                     await parser.parse(session)
 
     @pytest.mark.asyncio
-    async def test_parse_invalid_json(self, parser: SalehsCornerParser) -> None:
+    async def test_parse_invalid_json(self, parser: SeattleFoodTruckParser) -> None:
         """Test handling of invalid JSON response."""
         with aioresponses() as m:
             url_pattern = re.compile(re.escape(parser.BASE_URL) + r".*")
@@ -227,7 +260,7 @@ class TestSalehsCornerParser:
     # DATE RANGE CALCULATION TESTS
 
     @freeze_time("2025-08-01")
-    def test_get_api_date_range_current_date(self, parser: SalehsCornerParser) -> None:
+    def test_get_api_date_range_current_date(self, parser: SeattleFoodTruckParser) -> None:
         """Test date range calculation for current date."""
         start_str, end_str = parser._get_api_date_range()
 
@@ -236,7 +269,7 @@ class TestSalehsCornerParser:
         assert end_str == "8-7-25"
 
     @freeze_time("2025-12-29")
-    def test_get_api_date_range_year_rollover(self, parser: SalehsCornerParser) -> None:
+    def test_get_api_date_range_year_rollover(self, parser: SeattleFoodTruckParser) -> None:
         """Test date range calculation with year rollover."""
         start_str, end_str = parser._get_api_date_range()
 
@@ -245,7 +278,7 @@ class TestSalehsCornerParser:
         assert end_str == "1-4-26"
 
     @freeze_time("2025-01-01")
-    def test_get_api_date_range_new_year(self, parser: SalehsCornerParser) -> None:
+    def test_get_api_date_range_new_year(self, parser: SeattleFoodTruckParser) -> None:
         """Test date range calculation on New Year's Day."""
         start_str, end_str = parser._get_api_date_range()
 
@@ -254,7 +287,7 @@ class TestSalehsCornerParser:
         assert end_str == "1-7-25"
 
     @freeze_time("2025-08-01")
-    def test_get_api_date_range_custom_days(self, parser: SalehsCornerParser) -> None:
+    def test_get_api_date_range_custom_days(self, parser: SeattleFoodTruckParser) -> None:
         """Test date range calculation with custom number of days."""
         start_str, end_str = parser._get_api_date_range(days_ahead=14)
 
@@ -265,7 +298,7 @@ class TestSalehsCornerParser:
     # TIMESTAMP PARSING TESTS
 
     def test_parse_iso_timestamp_with_timezone(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing ISO timestamp with timezone offset."""
         timestamp_str = "2025-08-02T17:00:00.000-07:00"
@@ -279,7 +312,7 @@ class TestSalehsCornerParser:
         assert result.minute == 0
         assert result.tzinfo is None  # Should be timezone-naive
 
-    def test_parse_iso_timestamp_naive(self, parser: SalehsCornerParser) -> None:
+    def test_parse_iso_timestamp_naive(self, parser: SeattleFoodTruckParser) -> None:
         """Test parsing ISO timestamp without timezone (assume Pacific)."""
         timestamp_str = "2025-08-02T17:00:00.000"
         result = parser._parse_iso_timestamp(timestamp_str)
@@ -291,7 +324,7 @@ class TestSalehsCornerParser:
         assert result.hour == 17
         assert result.minute == 0
 
-    def test_parse_iso_timestamp_invalid(self, parser: SalehsCornerParser) -> None:
+    def test_parse_iso_timestamp_invalid(self, parser: SeattleFoodTruckParser) -> None:
         """Test parsing invalid timestamp."""
         invalid_timestamps = [
             "invalid-timestamp",
@@ -306,21 +339,21 @@ class TestSalehsCornerParser:
 
     # VENDOR NAME EXTRACTION TESTS
 
-    def test_extract_vendor_name_normal(self, parser: SalehsCornerParser) -> None:
+    def test_extract_vendor_name_normal(self, parser: SeattleFoodTruckParser) -> None:
         """Test extracting normal vendor name."""
         booked_truck = {"name": "Pumpkin Thai", "id": 123}
         result = parser._extract_vendor_name(booked_truck)
         assert result == "Pumpkin Thai"
 
     def test_extract_vendor_name_with_whitespace(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test extracting vendor name with extra whitespace."""
         booked_truck = {"name": "  Grilled Cheese & Co  ", "id": 123}
         result = parser._extract_vendor_name(booked_truck)
         assert result == "Grilled Cheese & Co"
 
-    def test_extract_vendor_name_empty(self, parser: SalehsCornerParser) -> None:
+    def test_extract_vendor_name_empty(self, parser: SeattleFoodTruckParser) -> None:
         """Test extracting empty vendor name."""
         from typing import Any, Dict, List
 
@@ -340,7 +373,7 @@ class TestSalehsCornerParser:
     # EVENT PARSING TESTS
 
     @freeze_time("2025-08-01")
-    def test_parse_single_event_complete(self, parser: SalehsCornerParser) -> None:
+    def test_parse_single_event_complete(self, parser: SeattleFoodTruckParser) -> None:
         """Test parsing a complete single event."""
         event_data = {
             "id": 12345,
@@ -363,12 +396,12 @@ class TestSalehsCornerParser:
 
         assert result is not None
         assert result.food_truck_name == "Pumpkin Thai"
-        assert result.description == "Cuisine: Thai, Asian"
+        assert result.description == "Thai, Asian"
         assert result.start_time is not None
         assert result.end_time is not None
         assert not result.ai_generated_name
 
-    def test_parse_single_event_no_bookings(self, parser: SalehsCornerParser) -> None:
+    def test_parse_single_event_no_bookings(self, parser: SeattleFoodTruckParser) -> None:
         """Test parsing event without bookings."""
         event_data = {
             "id": 12345,
@@ -383,7 +416,7 @@ class TestSalehsCornerParser:
 
     @freeze_time("2025-08-01")
     def test_parse_single_event_no_vendor_name(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing event with booking but no vendor name."""
         event_data = {
@@ -409,7 +442,7 @@ class TestSalehsCornerParser:
         assert result.food_truck_name == "TBD"  # Should fallback to TBD
 
     def test_parse_single_event_invalid_timestamps(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing event with invalid timestamps."""
         event_data = {
@@ -428,7 +461,7 @@ class TestSalehsCornerParser:
     # TIMESTAMP VALIDATION TESTS
 
     @freeze_time("2025-08-01")
-    def test_parse_event_timestamps_valid(self, parser: SalehsCornerParser) -> None:
+    def test_parse_event_timestamps_valid(self, parser: SeattleFoodTruckParser) -> None:
         """Test parsing valid event timestamps."""
         event_data = {
             "id": 12345,
@@ -445,7 +478,7 @@ class TestSalehsCornerParser:
         assert end_time.hour == 21
 
     def test_parse_event_timestamps_missing_fields(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing timestamps with missing fields."""
         from typing import Any, Dict, List
@@ -468,7 +501,7 @@ class TestSalehsCornerParser:
             assert end_time is None
 
     def test_parse_event_timestamps_invalid_order(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing timestamps where end time is before start time."""
         event_data = {
@@ -483,7 +516,7 @@ class TestSalehsCornerParser:
 
     @freeze_time("2025-08-05")
     def test_parse_event_timestamps_past_event(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test filtering out events that are too far in the past."""
         event_data = {
@@ -501,7 +534,7 @@ class TestSalehsCornerParser:
     @pytest.mark.asyncio
     @freeze_time("2025-08-01")
     async def test_api_parameters_constructed_correctly(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test that API parameters are constructed correctly."""
         with aioresponses() as m:
@@ -518,7 +551,7 @@ class TestSalehsCornerParser:
 
     @pytest.mark.asyncio
     async def test_parse_malformed_events_list(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing when events is not a list."""
         malformed_response = {"events": "not-a-list"}
@@ -534,7 +567,7 @@ class TestSalehsCornerParser:
     @pytest.mark.asyncio
     @freeze_time("2025-08-01")
     async def test_parse_events_with_partial_data(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing events with some invalid and some valid data."""
         mixed_response = {
@@ -576,7 +609,7 @@ class TestSalehsCornerParser:
     # TIMEZONE EDGE CASE TESTS
 
     @freeze_time("2025-03-09")  # DST transition date
-    def test_date_range_during_dst_transition(self, parser: SalehsCornerParser) -> None:
+    def test_date_range_during_dst_transition(self, parser: SeattleFoodTruckParser) -> None:
         """Test date range calculation during DST transition."""
         start_str, end_str = parser._get_api_date_range()
 
@@ -585,7 +618,7 @@ class TestSalehsCornerParser:
         assert end_str == "3-15-25"
 
     def test_parse_timestamp_different_timezones(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing timestamps with different timezone offsets."""
         test_cases = [
@@ -598,12 +631,13 @@ class TestSalehsCornerParser:
             result = parser._parse_iso_timestamp(timestamp_str)
             assert result is not None
             # Note: exact hour may vary due to timezone conversion
+            # result is naive but should represent the local hour
             assert isinstance(result, datetime)
 
     # FOOD CATEGORIES TESTS
 
     @freeze_time("2025-08-01")
-    def test_parse_event_with_food_categories(self, parser: SalehsCornerParser) -> None:
+    def test_parse_event_with_food_categories(self, parser: SeattleFoodTruckParser) -> None:
         """Test parsing event with food categories."""
         event_data = {
             "id": 12345,
@@ -623,11 +657,11 @@ class TestSalehsCornerParser:
         result = parser._parse_single_event(event_data)
 
         assert result is not None
-        assert result.description == "Cuisine: Thai, Asian, Vegetarian"
+        assert result.description == "Thai, Asian, Vegetarian"
 
     @freeze_time("2025-08-01")
     def test_parse_event_without_food_categories(
-        self, parser: SalehsCornerParser
+        self, parser: SeattleFoodTruckParser
     ) -> None:
         """Test parsing event without food categories."""
         event_data = {

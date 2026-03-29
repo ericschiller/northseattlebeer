@@ -7,6 +7,7 @@ class Brewery:
     key: str
     name: str
     url: str
+    website_url: Optional[str] = None
     parser_config: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:

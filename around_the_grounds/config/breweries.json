@@ -1,64 +1,10 @@
 {
   "breweries": [
     {
-      "key": "stoup-ballard",
-      "name": "Stoup Brewing - Ballard",
-      "url": "https://www.stoupbrewing.com/ballard/",
-      "parser_config": {
-        "selectors": {
-          "food_truck_entry": ".food-truck-day",
-          "info_container": ".lunch-truck-info",
-          "date": "h4",
-          "time": ".hrs",
-          "truck_name": ".truck"
-        }
-      }
-    },
-    {
-      "key": "yonder-balebreaker",
-      "name": "Yonder Cider & Bale Breaker - Ballard",
-      "url": "https://www.bbycballard.com/food-trucks-1-1",
-      "parser_config": {
-        "note": "Uses Squarespace calendar API to fetch food truck events",
-        "api_type": "squarespace_calendar"
-      }
-    },
-    {
-      "key": "obec-brewing",
-      "name": "Obec Brewing",
-      "url": "https://obecbrewing.com/",
-      "parser_config": {
-        "note": "Simple text format: 'Food truck: <name> <time>'",
-        "pattern": "Food truck:\\s*([^0-9]+)\\s*([0-9:]+\\s*-\\s*[0-9:]+)"
-      }
-    },
-    {
-      "key": "urban-family",
-      "name": "Urban Family Brewing",
-      "url": "https://urbanfamilybrewing.com/home/calendar/",
-      "parser_config": {
-        "note": "Primary source: WordPress Sugar Calendar HTML + AJAX; fallback to legacy Hivey API",
-        "calendar_url": "https://urbanfamilybrewing.com/home/calendar/",
-        "calendar_ajax_endpoint": "https://urbanfamilybrewing.com/wp-admin/admin-ajax.php",
-        "api_endpoint": "https://hivey-api-prod-pineapple.onrender.com/urbanfamily/public-calendar",
-        "api_type": "hivey_calendar"
-      }
-    },
-    {
-      "key": "wheelie-pop",
-      "name": "Wheelie Pop Brewing",
-      "url": "https://www.wheeliepopbrewing.com/seattle-ballard/",
-      "parser_config": {
-        "note": "Simple text format with dates and food truck names",
-        "selectors": {
-          "food_truck_text": "UPCOMING FOOD TRUCKS"
-        }
-      }
-    },
-    {
       "key": "chucks-greenwood",
       "name": "Chuck's Hop Shop Greenwood",
       "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8BmXLSrsUVJ1x_x8FslWooOXRLeEJV-Jq5NzhfUCI9TtO-qXr0ey2BzY8KI-GflT7ekl5015XX3uj/pub?gid=1143085558&single=true&output=csv",
+      "website_url": "https://www.chuckshopshop.com/greenwood",
       "parser_config": {
         "note": "Google Sheets CSV export with automatic monthly updates",
         "csv_direct": true,
@@ -66,22 +12,69 @@
       }
     },
     {
-      "key": "lucky-envelope",
-      "name": "Lucky Envelope Brewing",
-      "url": "https://www.luckyenvelopebrewing.com/",
-      "parser_config": {
-        "note": "Squarespace page with embedded JSON in data-current-context carousel attribute"
-      }
-    },
-    {
-      "key": "salehs-corner",
-      "name": "Saleh's Corner",
-      "url": "https://www.seattlefoodtruck.com/api/events",
+      "key": "broadview-taphouse",
+      "name": "Broadview Taphouse",
+      "url": "https://www.seattlefoodtruck.com/schedule/broadview-tap-house",
+      "website_url": "https://www.broadviewtaphouse.com/",
       "parser_config": {
         "note": "Seattle Food Truck API with structured JSON responses",
         "api_type": "seattle_food_truck",
-        "location_id": 164,
+        "location_id": 682,
         "date_format": "M-D-YY"
+      }
+    },
+    {
+      "key": "ridgecrest-pub",
+      "name": "Ridgecrest Public House",
+      "url": "https://www.ridgecrest.pub/foodtruckcalendarfunctional",
+      "website_url": "https://www.ridgecrest.pub/",
+      "parser_config": {
+        "note": "Squarespace events collection JSON",
+        "api_type": "squarespace_events",
+        "exclude_patterns": [
+          "Trivia",
+          "Knit Nite",
+          "Run Club",
+          "MOM'S NIGHT",
+          "DAD'S NIGHT",
+          "food trucks"
+        ]
+      }
+    },
+    {
+      "key": "shoreline-cc",
+      "name": "Shoreline Community College",
+      "url": "https://wafoodtrucks.org/shorelinecc",
+      "website_url": "https://www.shoreline.edu/",
+      "parser_config": {
+        "note": "WA Food Truck Association Squarespace page with list of dates",
+        "api_type": "wa_food_trucks"
+      }
+    },
+    {
+      "key": "hellbent",
+      "name": "Hellbent Brewing Company",
+      "url": "https://hellbentbrewingcompany.com/food-trucks/",
+      "website_url": "https://hellbentbrewingcompany.com/",
+      "parser_config": {
+        "note": "WordPress site with Simple Calendar (SimCal) plugin",
+        "api_type": "simcal"
+      }
+    },
+    {
+      "key": "ravenna-brewing",
+      "name": "Ravenna Brewing Co.",
+      "url": "https://www.ravennabrewing.com/food-truck-calendar",
+      "website_url": "https://www.ravennabrewing.com/",
+      "parser_config": {
+        "note": "Squarespace events collection JSON",
+        "api_type": "squarespace_events",
+        "exclude_patterns": [
+          "Trivia",
+          "GAME NIGHT",
+          "MEET-N-GREET",
+          "Calendar"
+        ]
       }
     }
   ]

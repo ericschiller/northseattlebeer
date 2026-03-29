@@ -9,9 +9,9 @@ from ..utils.timezone_utils import now_in_pacific_naive, utc_to_pacific_naive
 from .base import BaseParser
 
 
-class SalehsCornerParser(BaseParser):
+class SeattleFoodTruckParser(BaseParser):
     """
-    Parser for Saleh's Corner using the Seattle Food Truck API.
+    Parser for locations using the Seattle Food Truck API.
 
     This parser fetches food truck schedule data from seattlefoodtruck.com's
     RESTful JSON API, which provides comprehensive event information including
@@ -19,14 +19,16 @@ class SalehsCornerParser(BaseParser):
     """
 
     BASE_URL = "https://www.seattlefoodtruck.com/api/events"
-    LOCATION_ID = 164  # Saleh's Corner location ID
 
     def __init__(self, brewery: Brewery) -> None:
         super().__init__(brewery)
+        self.location_id = self.brewery.parser_config.get("location_id")
+        if not self.location_id:
+            raise ValueError(f"Missing 'location_id' in parser_config for brewery: {brewery.key}")
 
     async def parse(self, session: aiohttp.ClientSession) -> List[FoodTruckEvent]:
         """
-        Parse food truck events from Saleh's Corner API.
+        Parse food truck events from Seattle Food Truck API.
 
         Returns events for the next 7 days with confirmed bookings only.
         """
@@ -40,7 +42,7 @@ class SalehsCornerParser(BaseParser):
                 "page_size": 300,
                 "start_date": start_date_str,
                 "end_date": end_date_str,
-                "for_locations": self.LOCATION_ID,
+                "for_locations": self.location_id,
                 "with_active_trucks": "true",
                 "include_bookings": "true",
             }
@@ -56,7 +58,7 @@ class SalehsCornerParser(BaseParser):
                     raise ValueError(f"Access forbidden (403): {self.BASE_URL}")
                 elif response.status == 429:
                     raise ValueError(
-                        "Rate limited (429): Too many requests to Saleh's API"
+                        "Rate limited (429): Too many requests to Seattle Food Truck API"
                     )
                 elif response.status == 500:
                     raise ValueError(f"Server error (500): {self.BASE_URL}")
@@ -88,12 +90,12 @@ class SalehsCornerParser(BaseParser):
                 return valid_events
 
         except aiohttp.ClientError as e:
-            raise ValueError(f"Network error fetching Saleh's Corner API: {str(e)}")
+            raise ValueError(f"Network error fetching Seattle Food Truck API: {str(e)}")
         except Exception as e:
-            self.logger.error(f"Error parsing Saleh's Corner: {str(e)}")
+            self.logger.error(f"Error parsing Seattle Food Truck API: {str(e)}")
             if isinstance(e, ValueError):
                 raise  # Re-raise our custom ValueError messages
-            raise ValueError(f"Failed to parse Saleh's Corner API: {str(e)}")
+            raise ValueError(f"Failed to parse Seattle Food Truck API: {str(e)}")
 
     def _get_api_date_range(self, days_ahead: int = 7) -> Tuple[str, str]:
         """
@@ -198,7 +200,7 @@ class SalehsCornerParser(BaseParser):
             # Create description with food categories if available
             description = None
             if food_categories:
-                description = f"Cuisine: {', '.join(food_categories)}"
+                description = f"{', '.join(food_categories)}"
 
             return FoodTruckEvent(
                 brewery_key=self.brewery.key,

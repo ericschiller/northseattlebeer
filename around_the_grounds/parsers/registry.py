@@ -3,24 +3,32 @@ from typing import Dict, Type
 from .bale_breaker import BaleBreakerParser
 from .base import BaseParser
 from .chucks_greenwood import ChucksGreenwoodParser
+from .hellbent import HellbentParser
 from .lucky_envelope import LuckyEnvelopeParser
 from .obec_brewing import ObecBrewingParser
-from .salehs_corner import SalehsCornerParser
+from .seattle_food_truck import SeattleFoodTruckParser
+from .squarespace_events import SquarespaceEventsParser
 from .stoup_ballard import StoupBallardParser
 from .urban_family import UrbanFamilyParser
+from .wa_food_trucks import WaFoodTrucksParser
 from .wheelie_pop import WheeliePopParser
 
 
 class ParserRegistry:
     _parsers: Dict[str, Type[BaseParser]] = {
         "stoup-ballard": StoupBallardParser,
-        "yonder-balebreaker": BaleBreakerParser,
+        "yonder-balebreaker": SquarespaceEventsParser,
         "obec-brewing": ObecBrewingParser,
         "urban-family": UrbanFamilyParser,
         "wheelie-pop": WheeliePopParser,
         "chucks-greenwood": ChucksGreenwoodParser,
-        "salehs-corner": SalehsCornerParser,
+        "salehs-corner": SeattleFoodTruckParser,
+        "broadview-taphouse": SeattleFoodTruckParser,
+        "ridgecrest-pub": SquarespaceEventsParser,
+        "ravenna-brewing": SquarespaceEventsParser,
         "lucky-envelope": LuckyEnvelopeParser,
+        "shoreline-cc": WaFoodTrucksParser,
+        "hellbent": HellbentParser,
     }
 
     @classmethod

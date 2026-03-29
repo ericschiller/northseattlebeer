@@ -1,0 +1,9 @@
+{
+  "name": "around-the-grounds",
+  "private": true,
+  "scripts": {
+    "build": "npm run generate --prefix frontend",
+    "generate": "npm run generate --prefix frontend",
+    "install": "npm install --prefix frontend"
+  }
+}

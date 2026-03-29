@@ -8,7 +8,7 @@ Handles redirects, filters events, and processes meal categories.
 import csv
 import io
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import aiohttp
 
@@ -118,16 +118,6 @@ class ChucksGreenwoodParser(BaseParser):
 
     def _parse_csv_row(self, row: List[str]) -> Optional[FoodTruckEvent]:
         """Parse a single CSV row into a FoodTruckEvent."""
-        # Actual CSV structure (from real data):
-        # Column A (0): Day of Week ("Fri", "Sat", "Sun")
-        # Column B (1): Month+Date ("Aug 1", "Sep 15", "Oct 31")
-        # Column C (2): Time ("12 AM")
-        # Column D (3): "to"
-        # Column E (4): End Day
-        # Column F (5): Event Type ("Food Truck", "Event")
-        # Column G (6): Event Name ("Dinner: T'Juana", "Brunch: Good Morning Tacos")
-        # ... additional columns
-
         if len(row) < 7:
             self.logger.debug(f"Row too short: {len(row)} columns, expected at least 7")
             return None
@@ -139,68 +129,74 @@ class ChucksGreenwoodParser(BaseParser):
         # Filter for food truck events only (Column F)
         event_type = row[5].strip() if len(row) > 5 else ""
         if event_type != "Food Truck":
-            self.logger.debug(
-                f"Skipping non-food truck event: {row[6] if len(row) > 6 else 'Unknown'}"
-            )
             return None
 
         # Extract event name (Column G)
         event_name = row[6].strip() if len(row) > 6 else ""
         if not event_name:
-            self.logger.debug("Skipping row with empty event name")
             return None
 
-        # Parse vendor name from event name
-        food_truck_name = self._extract_vendor_name(event_name)
+        # Parse vendor name and meal type from event name
+        food_truck_name, meal_type = self._extract_vendor_and_meal(event_name)
         if not food_truck_name:
-            self.logger.debug(f"Could not extract vendor name from: {event_name}")
             return None
 
         # Parse date from columns A and B (day of week and "Month Date")
         event_date = self._parse_date_from_month_date_column(row[0], row[1])
         if not event_date:
-            self.logger.debug(
-                f"Could not parse date from: {row[0]}, {row[1]}, {row[2]}"
-            )
             return None
+
+        # Set times based on meal type
+        start_time, end_time = self._get_times_for_meal(event_date, meal_type)
 
         return FoodTruckEvent(
             brewery_key=self.brewery.key,
             brewery_name=self.brewery.name,
             food_truck_name=food_truck_name,
             date=event_date,
-            start_time=None,  # Times are placeholder "12 AM" in the data
-            end_time=None,
-            description=f"Original event: {event_name}",
+            start_time=start_time,
+            end_time=end_time,
+            description=meal_type.capitalize() if meal_type else None,
             ai_generated_name=False,
         )
 
-    def _extract_vendor_name(self, event_name: str) -> Optional[str]:
-        """Extract vendor name from event name, handling meal type prefixes."""
+    def _extract_vendor_and_meal(self, event_name: str) -> Tuple[Optional[str], Optional[str]]:
+        """Extract vendor name and meal type from event name."""
         if not event_name or not event_name.strip():
-            return None
+            return None, None
 
-        # Handle format like "Dinner: T'Juana" or "Brunch: Good Morning Tacos"
+        meal_type = None
+        vendor_name = event_name.strip()
+
         if ":" in event_name:
             parts = event_name.split(":", 1)
             if len(parts) == 2:
-                meal_type = parts[0].strip()
-                vendor_name = parts[1].strip()
+                prefix = parts[0].strip().lower()
+                if prefix in ["brunch", "dinner"]:
+                    meal_type = prefix
+                    vendor_name = parts[1].strip()
 
-                # Validate meal type
-                if meal_type.lower() in ["brunch", "dinner"]:
-                    return vendor_name if vendor_name else None
-                else:
-                    # If not a recognized meal type, treat whole string as vendor name
-                    cleaned_name = event_name.strip()
-                    return cleaned_name if cleaned_name else None
-            else:
-                cleaned_name = event_name.strip()
-                return cleaned_name if cleaned_name else None
-        else:
-            # No colon, treat as vendor name directly
-            cleaned_name = event_name.strip()
-            return cleaned_name if cleaned_name else None
+        return vendor_name, meal_type
+
+    def _get_times_for_meal(self, event_date: datetime, meal_type: Optional[str]) -> Tuple[Optional[datetime], Optional[datetime]]:
+        """Get start and end times based on meal type (brunch or dinner)."""
+        if not meal_type:
+            # Default to standard dinner hours if unknown
+            return (
+                event_date.replace(hour=17, minute=0, second=0, microsecond=0),
+                event_date.replace(hour=21, minute=0, second=0, microsecond=0)
+            )
+        
+        if meal_type == "brunch":
+            return (
+                event_date.replace(hour=11, minute=0, second=0, microsecond=0),
+                event_date.replace(hour=15, minute=0, second=0, microsecond=0)
+            )
+        else: # dinner
+            return (
+                event_date.replace(hour=17, minute=0, second=0, microsecond=0),
+                event_date.replace(hour=21, minute=0, second=0, microsecond=0)
+            )
 
     def _parse_date_from_month_date_column(
         self, day_col: str, month_date_col: str
@@ -235,22 +231,16 @@ class ChucksGreenwoodParser(BaseParser):
                 self.logger.debug(f"Invalid day number: {date_str}")
                 return None
 
-            # Validate day range
-            if not (1 <= day_num <= 31):
-                return None
-
             # Determine appropriate year using Pacific timezone context
             current_year = get_pacific_year()
             current_month = get_pacific_month()
 
             # If the month is before current month, assume next year
-            # This handles month rollover (e.g., parsing January dates in December)
             if month_num < current_month:
                 year = current_year + 1
             else:
                 year = current_year
 
-            # Create date using Pacific timezone context
             return parse_date_with_pacific_context(year, month_num, day_num)
 
         except Exception as e:
