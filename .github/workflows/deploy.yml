@@ -73,6 +73,9 @@ jobs:
         run: |
           # Ensure Jekyll doesn't run on the output
           touch frontend/.output/public/.nojekyll
+          # List files for debugging
+          echo "Build output structure:"
+          ls -R frontend/.output/public/
 
       # --- Step 3: Deploy to Pages ---
       - name: Setup Pages
