@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
   app: {
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
       title: 'North Seattle Food Trucks',
       meta: [
@@ -20,7 +21,7 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
-    preset: 'node-server',
+    preset: 'static',
     prerender: {
       routes: ['/']
     }
