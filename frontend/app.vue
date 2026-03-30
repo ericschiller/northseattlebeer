@@ -22,7 +22,7 @@ interface WebData {
   errors?: string[]
 }
 
-const { data, pending, error } = useFetch<WebData>('/data.json')
+const { data, pending, error } = useFetch<WebData>('data.json')
 
 const currentTab = ref<'trucks' | 'events'>('trucks')
 

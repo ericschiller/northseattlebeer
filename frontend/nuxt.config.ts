@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || '/',
+    buildAssetsDir: 'assets',
     head: {
       title: 'North Seattle Food Trucks',
       meta: [
