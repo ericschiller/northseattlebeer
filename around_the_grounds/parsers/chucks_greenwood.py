@@ -128,8 +128,17 @@ class ChucksGreenwoodParser(BaseParser):
             return None
 
         # Filter for food truck and general event rows (Column F)
-        event_type = row[5].strip() if len(row) > 5 else ""
-        if event_type not in ("Food Truck", "Event"):
+        event_type_raw = row[5].strip() if len(row) > 5 else ""
+        event_type_lower = event_type_raw.lower()
+        
+        if "event" in event_type_lower:
+            event_type = "Event"
+        elif "food truck" in event_type_lower:
+            event_type = "Food Truck"
+        elif not event_type_raw:
+            # Fallback if column F is empty but column G has content
+            event_type = "Food Truck"
+        else:
             return None
 
         # Extract event name (Column G)
@@ -242,9 +251,15 @@ class ChucksGreenwoodParser(BaseParser):
             current_year = get_pacific_year()
             current_month = get_pacific_month()
 
-            # If the month is before current month, assume next year
-            if month_num < current_month:
+            # If month is much earlier (e.g. current is Jan, month is Dec), assume last year 
+            # (but we mostly care about future events)
+            # If month is Dec and current is Jan, it's likely from the previous year's sheet
+            # If month is Jan and current is Dec, it's likely next year
+            
+            if month_num == 1 and current_month == 12:
                 year = current_year + 1
+            elif month_num == 12 and current_month == 1:
+                year = current_year - 1
             else:
                 year = current_year
 
