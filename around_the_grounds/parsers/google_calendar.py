@@ -102,13 +102,14 @@ def _expand_weekly(
     duration = (dtend - dtstart) if dtend else None
 
     results = []
-    cursor = _midnight(now)
+    cursor = _midnight(dtstart)  # Start from the event's original start date
     while cursor <= cutoff:
         if cursor.weekday() in target_days:
             occ_start = cursor.replace(
                 hour=dtstart.hour, minute=dtstart.minute, second=0, microsecond=0
             )
-            if occ_start >= now and (until is None or occ_start <= until):
+            # Only include if it's within our window (today onwards)
+            if occ_start.date() >= now.date() and (until is None or occ_start <= until):
                 occ_end = occ_start + duration if duration else None
                 results.append((occ_start, occ_end))
         cursor += timedelta(days=1)
@@ -202,6 +203,14 @@ class GoogleCalendarParser(BaseParser):
         if rrule_value:
             byday, until = _parse_rrule(rrule_value)
             if byday:
+                # CRITICAL FIX for Chuck's Hop Shop:
+                # Their calendar has MANY old recurring events from 2013-2015 that don't have UNTIL dates.
+                # If an event started more than 30 days ago and has no UNTIL date, it's likely stale.
+                now = datetime.now(tz=_PACIFIC).replace(tzinfo=None)
+                if dtstart.date() < (now - timedelta(days=30)).date() and until is None:
+                    self.logger.debug(f"Skipping potentially stale infinite recurring event: {summary}")
+                    return []
+
                 occurrences = _expand_weekly(dtstart, dtend, byday, until)
                 return [
                     self._make_event(summary, s, e, category, is_date_only=False)
@@ -209,8 +218,10 @@ class GoogleCalendarParser(BaseParser):
                 ]
             return []
 
-        # Single event — skip past events
+        # Single event — only include if it's within our window (today or future)
         now = datetime.now(tz=_PACIFIC).replace(tzinfo=None)
+        # Check if the event is within the window (e.g. today to 7 days from now)
+        # We'll be a bit more generous here and let the coordinator do the final 7-day clip
         if dtstart.date() < now.date():
             return []
 
