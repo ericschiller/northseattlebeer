@@ -105,6 +105,15 @@
           "Bingo": "community"
         }
       }
+    },
+    {
+      "key": "flying-bike",
+      "name": "Flying Bike Cooperative Brewery",
+      "url": "https://calendar.google.com/calendar/ical/flyingbike.coop_io1qblhhb2n2h367j0jf7itchk%40group.calendar.google.com/public/basic.ics",
+      "website_url": "https://www.flyingbike.coop/",
+      "parser_config": {
+        "note": "Public Google Calendar iCal feed for events"
+      }
     }
   ]
 }

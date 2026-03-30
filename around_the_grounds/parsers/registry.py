@@ -29,6 +29,7 @@ class ParserRegistry:
         "ridgecrest-pub": SquarespaceEventsParser,
         "ravenna-brewing": SquarespaceEventsParser,
         "halcyon-brewing": SquarespaceEventsParser,
+        "flying-bike": GoogleCalendarParser,
         "lucky-envelope": LuckyEnvelopeParser,
         "shoreline-cc": WaFoodTrucksParser,
         "hellbent": GoogleCalendarParser,
