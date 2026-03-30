@@ -162,6 +162,7 @@ class GoogleCalendarParser(BaseParser):
     def _parse_vevent(self, block: str) -> List[FoodTruckEvent]:
         summary = ""
         dtstart_params = dtstart_value = ""
+        recurrence_params = recurrence_value = ""
         dtend_params = dtend_value = ""
         rrule_value = ""
 
@@ -176,15 +177,23 @@ class GoogleCalendarParser(BaseParser):
                 summary = value
             elif base_key == "DTSTART":
                 dtstart_params, dtstart_value = params_part, value
+            elif base_key == "RECURRENCE-ID":
+                recurrence_params, recurrence_value = params_part, value
             elif base_key == "DTEND":
                 dtend_params, dtend_value = params_part, value
             elif base_key == "RRULE":
                 rrule_value = value
 
-        if not summary or not dtstart_value:
+        if not summary or (not dtstart_value and not recurrence_value):
             return []
 
-        dtstart = _parse_dt(dtstart_params, dtstart_value)
+        # If RECURRENCE-ID is present, it specifies the specific occurrence date
+        if recurrence_value:
+            dtstart = _parse_dt(recurrence_params, recurrence_value)
+            dtstart_params = recurrence_params # use recurrence params for is_date_only check
+        else:
+            dtstart = _parse_dt(dtstart_params, dtstart_value)
+            
         dtend = _parse_dt(dtend_params, dtend_value) if dtend_value else None
         if not dtstart:
             return []
@@ -218,10 +227,9 @@ class GoogleCalendarParser(BaseParser):
                 ]
             return []
 
-        # Single event — only include if it's within our window (today or future)
+        # Single event (including those with RECURRENCE-ID)
         now = datetime.now(tz=_PACIFIC).replace(tzinfo=None)
-        # Check if the event is within the window (e.g. today to 7 days from now)
-        # We'll be a bit more generous here and let the coordinator do the final 7-day clip
+        # Only include if it's within our window (today or future)
         if dtstart.date() < now.date():
             return []
 
