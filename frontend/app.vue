@@ -66,7 +66,9 @@ const formatUpdatedDate = (isoString: string) => {
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
-      year: 'numeric' 
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
     })
   } catch (e) {
     return ''
