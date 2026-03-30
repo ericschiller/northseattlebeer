@@ -87,7 +87,6 @@ class LuckyEnvelopeParser(BaseParser):
                 start_time=start_dt,
                 end_time=end_dt,
                 description=None,
-                ai_generated_name=False,
             )
         except Exception as e:
             self.logger.warning(f"Failed to parse event item: {str(e)}")

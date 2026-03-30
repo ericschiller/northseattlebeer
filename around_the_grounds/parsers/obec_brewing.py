@@ -48,7 +48,6 @@ class ObecBrewingParser(BaseParser):
                     date=today,
                     start_time=start_time,
                     end_time=end_time,
-                    ai_generated_name=False,
                 )
                 events.append(event)
 

@@ -43,7 +43,6 @@ def mock_events() -> List[Dict[str, Any]]:
             "start_time": "2025-07-06T13:00:00",
             "end_time": "2025-07-06T20:00:00",
             "description": "Great food truck",
-            "ai_generated_name": False,
         },
         {
             "brewery_key": "test-brewery-1",
@@ -53,7 +52,6 @@ def mock_events() -> List[Dict[str, Any]]:
             "start_time": None,
             "end_time": None,
             "description": None,
-            "ai_generated_name": True,
         },
     ]
 
@@ -151,7 +149,6 @@ class TestScrapeActivities:
                     start_time=datetime(2025, 7, 6, 13, 0),
                     end_time=datetime(2025, 7, 6, 20, 0),
                     description="Great food truck",
-                    ai_generated_name=False,
                 ),
                 FoodTruckEvent(
                     brewery_key="test-brewery-2",
@@ -161,7 +158,6 @@ class TestScrapeActivities:
                     start_time=None,
                     end_time=None,
                     description=None,
-                    ai_generated_name=True,
                 ),
             ]
 
@@ -184,7 +180,6 @@ class TestScrapeActivities:
             assert event1["start_time"] == "2025-07-06T13:00:00"
             assert event1["end_time"] == "2025-07-06T20:00:00"
             assert event1["description"] == "Great food truck"
-            assert event1["ai_generated_name"] is False
 
             # Check second event serialization
             event2 = events[1]
@@ -195,7 +190,6 @@ class TestScrapeActivities:
             assert event2["start_time"] is None
             assert event2["end_time"] is None
             assert event2["description"] is None
-            assert event2["ai_generated_name"] is True
 
     @pytest.mark.asyncio
     async def test_scrape_food_trucks_with_errors(
@@ -270,7 +264,6 @@ class TestScrapeActivities:
                 start_time=None,
                 end_time=None,
                 description=None,
-                ai_generated_name=False,
             )
 
             mock_coordinator.scrape_one = AsyncMock(return_value=([mock_event], None))
@@ -396,14 +389,12 @@ class TestDeploymentActivities:
             assert event1.brewery_key == "test-brewery-1"
             assert event1.brewery_name == "Test Brewery 1"
             assert event1.food_truck_name == "Test Truck 1"
-            assert event1.ai_generated_name is False
 
             # Check second reconstructed event
             event2 = reconstructed_events[1]
             assert event2.brewery_key == "test-brewery-1"
             assert event2.brewery_name == "Test Brewery 1"
             assert event2.food_truck_name == "AI Truck"
-            assert event2.ai_generated_name is True
 
     @pytest.mark.asyncio
     async def test_deploy_to_git_success(self) -> None:

@@ -92,7 +92,6 @@ class WaFoodTrucksParser(BaseParser):
                         start_time=start_time,
                         end_time=end_time,
                         description="Food Truck",
-                        ai_generated_name=False
                     ))
         
         return events

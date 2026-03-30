@@ -39,7 +39,6 @@ class ScrapeActivities:
             "start_time": event.start_time.isoformat() if event.start_time else None,
             "end_time": event.end_time.isoformat() if event.end_time else None,
             "description": event.description,
-            "ai_generated_name": event.ai_generated_name,
         }
 
     @staticmethod
@@ -153,7 +152,6 @@ class DeploymentActivities:
                     else None
                 ),
                 description=event_data["description"],
-                ai_generated_name=event_data["ai_generated_name"],
             )
             reconstructed_events.append(event)
 

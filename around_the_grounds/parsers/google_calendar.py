@@ -205,6 +205,5 @@ class GoogleCalendarParser(BaseParser):
             start_time=None if is_date_only else start,
             end_time=None if is_date_only else end,
             description=None,
-            ai_generated_name=False,
             category=category,
         )

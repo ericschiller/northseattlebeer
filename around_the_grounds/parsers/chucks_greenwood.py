@@ -164,7 +164,6 @@ class ChucksGreenwoodParser(BaseParser):
             start_time=start_time,
             end_time=end_time,
             description=meal_type.capitalize() if meal_type else None,
-            ai_generated_name=False,
             category=category,
         )
 

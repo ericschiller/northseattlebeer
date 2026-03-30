@@ -185,7 +185,6 @@ class SquarespaceEventsParser(BaseParser):
                 start_time=start_date,
                 end_time=end_date,
                 description=None,
-                ai_generated_name=False,
                 category=category,
             )
         except Exception as e:

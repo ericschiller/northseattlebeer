@@ -83,7 +83,6 @@ class HellbentParser(BaseParser):
                         start_time=start_dt,
                         end_time=end_dt,
                         description=None,
-                        ai_generated_name=False
                     ))
 
             valid_events = self.filter_valid_events(events)

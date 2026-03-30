@@ -195,38 +195,6 @@ class TestCLI:
         assert "❌ Check Instagram @TestBrewery" in output
         assert "check Instagram" in output
 
-    def test_format_events_output_ai_generated_name(self) -> None:
-        """Test formatting events with AI-generated vendor names."""
-        future_date = datetime.now() + timedelta(days=1)
-        ai_event = FoodTruckEvent(
-            brewery_key="test-brewery",
-            brewery_name="Test Brewery",
-            food_truck_name="Georgia's",
-            date=future_date,
-            start_time=future_date.replace(hour=12),
-            end_time=future_date.replace(hour=20),
-            description="Greek food",
-            ai_generated_name=True,
-        )
-        regular_event = FoodTruckEvent(
-            brewery_key="test-brewery",
-            brewery_name="Test Brewery",
-            food_truck_name="Taco Supreme",
-            date=future_date,
-            start_time=future_date.replace(hour=11),
-            end_time=future_date.replace(hour=21),
-            ai_generated_name=False,
-        )
-
-        output = format_events_output([ai_event, regular_event])
-
-        # AI-generated name should have emoji indicators
-        assert "🚚 Georgia's 🖼️🤖 @ Test Brewery" in output
-        # Regular name should not have emoji indicators
-        assert "🚚 Taco Supreme @ Test Brewery" in output
-        # Ensure no AI emojis for regular events
-        assert "Taco Supreme 🖼️🤖" not in output
-
     @pytest.mark.asyncio
     async def test_scrape_food_trucks_success(
         self, temp_config_file: str, sample_cli_events: List[FoodTruckEvent]

@@ -210,7 +210,6 @@ class SeattleFoodTruckParser(BaseParser):
                 start_time=start_time_dt,
                 end_time=end_time_dt,
                 description=description,
-                ai_generated_name=False,  # Names are provided directly by API
             )
 
         except Exception as e:

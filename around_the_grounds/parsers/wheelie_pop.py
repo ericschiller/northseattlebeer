@@ -177,7 +177,6 @@ class WheeliePopParser(BaseParser):
             date=date,
             start_time=start_time,
             end_time=end_time,
-            ai_generated_name=False,
         )
 
     def _parse_time(self, article: Tag, selector: str) -> Optional[datetime]:
