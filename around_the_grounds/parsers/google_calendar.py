@@ -147,17 +147,34 @@ class GoogleCalendarParser(BaseParser):
         for block in blocks:
             events.extend(self._parse_vevent(block))
         
-        # Deduplicate identical events by date and name
-        seen = set()
-        deduped: List[FoodTruckEvent] = []
+        # Deduplicate and filter
+        # 1. Exact identical deduplication
+        seen_exact = set()
+        unique_events = []
         for event in events:
-            key = (event.date.date(), event.food_truck_name, event.start_time, event.end_time)
-            if key in seen:
+            key = (event.date.date(), event.food_truck_name.lower(), event.start_time, event.end_time)
+            if key in seen_exact:
                 continue
-            seen.add(key)
-            deduped.append(event)
+            seen_exact.add(key)
+            unique_events.append(event)
             
-        return deduped
+        # 2. Category-specific strictness (e.g. only one truck per day for most breweries)
+        # We'll allow multiple if they have different start times (e.g. Brunch vs Dinner)
+        # But for Hellbent, they usually only have one.
+        seen_truck_slots = {}
+        final_events = []
+        
+        # Sort by date and then by how specifically they were defined (non-recurring first)
+        for event in unique_events:
+            if event.category == "food-truck":
+                slot_key = (event.date.date(), event.start_time)
+                if slot_key in seen_truck_slots:
+                    continue
+                seen_truck_slots[slot_key] = event
+            
+            final_events.append(event)
+            
+        return final_events
 
     def _parse_vevent(self, block: str) -> List[FoodTruckEvent]:
         summary = ""
