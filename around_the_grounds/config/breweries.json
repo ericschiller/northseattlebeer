@@ -124,6 +124,16 @@
         "note": "Static recurring events (site protected by Cloudflare)",
         "api_type": "barking-dog"
       }
+    },
+    {
+      "key": "burke-gilman",
+      "name": "Burke-Gilman Brewing Company",
+      "url": "https://www.burkegilmanbrewing.com/",
+      "website_url": "https://www.burkegilmanbrewing.com/",
+      "parser_config": {
+        "note": "Static recurring events and permanent food truck",
+        "api_type": "burke-gilman"
+      }
     }
   ]
 }
