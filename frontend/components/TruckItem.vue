@@ -14,21 +14,14 @@ const badgeLabel = computed(() => {
   if (props.category) return props.category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return 'Food Truck'
 })
-
-const searchTruck = (truckName: string) => {
-  const cleanName = truckName.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1F018}-\u{1F270}]|[\u{238C}]|[\u{2764}]|[\u{FE0F}]/gu, '').trim();
-  const searchQuery = encodeURIComponent(`${cleanName} food truck seattle`);
-  window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank');
-}
 </script>
 
 <template>
-  <div class="group p-8 rounded-lg bg-[#FFFFFF] border border-[#1E293B]/10 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] transition-all duration-300">
+  <div class="group p-8 rounded-lg bg-[#FFFFFF] border border-[#1E293B]/10 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] transition-all duration-300 hover:border-primary-mint/30 hover:shadow-md">
     <div class="flex flex-col md:flex-row md:items-center justify-between">
       <div class="max-w-md">
         <h3
-          @click="searchTruck(name)"
-          class="font-headline text-[1.25rem] font-bold tracking-tight text-[#1E293B] mb-2 cursor-pointer transition-colors"
+          class="font-headline text-[1.25rem] font-bold tracking-tight text-[#1E293B] mb-2 transition-colors group-hover:text-primary-mint-dark"
         >
           {{ name }}
         </h3>

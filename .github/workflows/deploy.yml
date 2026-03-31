@@ -86,6 +86,9 @@ jobs:
           
           # Ensure Jekyll doesn't run on the output
           touch frontend/.output/public/.nojekyll
+          
+          # Create 404.html from index.html to support SPA routing on GitHub Pages
+          cp frontend/.output/public/index.html frontend/.output/public/404.html
 
       # --- Step 3: Deploy to Pages ---
       - name: Setup Pages
