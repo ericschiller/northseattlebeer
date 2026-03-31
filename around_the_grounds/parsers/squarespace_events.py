@@ -79,11 +79,11 @@ class SquarespaceEventsParser(BaseParser):
         try:
             from datetime import timedelta
             now = datetime.now()
-            # Get current month and next month
-            months_to_fetch = [
-                (now.year, now.month),
-                ((now + timedelta(days=32)).year, (now + timedelta(days=32)).month),
-            ]
+            # Get current month, next month, and the one after to be safe (especially at month-end)
+            months_to_fetch = []
+            for i in range(3):
+                target_date = now.replace(day=1) + timedelta(days=32 * i)
+                months_to_fetch.append((target_date.year, target_date.month))
 
             month_names = ["January", "February", "March", "April", "May", "June", 
                            "July", "August", "September", "October", "November", "December"]
