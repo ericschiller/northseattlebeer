@@ -23,18 +23,6 @@ class BurkeGilmanParser(BaseParser):
             current_date = now + timedelta(days=i)
             weekday = current_date.weekday() # 0 is Monday, 1 is Tuesday, etc.
             
-            # Daily: El Camion (Permanent Food Truck)
-            events.append(
-                FoodTruckEvent(
-                    brewery_key=self.brewery.key,
-                    brewery_name=self.brewery.name,
-                    food_truck_name="El Camion",
-                    date=current_date.replace(hour=0, minute=0, second=0, microsecond=0),
-                    description="Permanent food truck located in the parking lot.",
-                    category="food-truck"
-                )
-            )
-
             # Tuesday: King Trivia
             if weekday == 1:
                 events.append(
