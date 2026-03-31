@@ -64,18 +64,18 @@ class SquarespaceEventsParser(BaseParser):
 
     async def _parse_via_collection_api(self, session: aiohttp.ClientSession) -> List[FoodTruckEvent]:
         # Implementation similar to BaleBreakerParser for robustness
-        collection_id = None
+        collection_ids = []
         try:
             soup = await self.fetch_page(session, self.brewery.url)
             if soup:
-                collection_id = self._extract_collection_id(soup)
+                collection_ids = self._extract_collection_ids(soup)
         except Exception as e:
             self.logger.error(f"Error fetching main page for {self.brewery.key}: {str(e)}")
 
-        if not collection_id:
+        if not collection_ids:
             return []
 
-        events = []
+        all_events = []
         try:
             from datetime import timedelta
             now = datetime.now()
@@ -97,34 +97,36 @@ class SquarespaceEventsParser(BaseParser):
             parsed_url = urlparse(self.brewery.url)
             base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-            for year, month in months_to_fetch:
-                month_str = f"{month_names[month - 1]}-{year}"
-                
-                # We'll try the /api/open endpoint first
-                api_url = f"{base_url}/api/open/GetItemsByMonth?month={month_str}&collectionId={collection_id}"
-                self.logger.debug(f"Fetching calendar data from: {api_url}")
+            for collection_id in collection_ids:
+                for year, month in months_to_fetch:
+                    month_str = f"{month_names[month - 1]}-{year}"
+                    
+                    # We'll try the /api/open endpoint first
+                    api_url = f"{base_url}/api/open/GetItemsByMonth?month={month_str}&collectionId={collection_id}"
+                    self.logger.debug(f"Fetching calendar data from: {api_url}")
 
-                async with session.get(api_url) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        for item in data:
-                            title = item.get("title", "").strip()
-                            category = self._get_category(title)
-                            if category is None:
-                                continue
-                            event = self._parse_json_item(item, category)
-                            if event:
-                                events.append(event)
-                    else:
-                        self.logger.warning(f"API request failed with status {response.status} for {api_url}")
+                    async with session.get(api_url) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            for item in data:
+                                title = item.get("title", "").strip()
+                                category = self._get_category(title)
+                                if category is None:
+                                    continue
+                                event = self._parse_json_item(item, category)
+                                if event:
+                                    all_events.append(event)
+                        else:
+                            self.logger.warning(f"API request failed with status {response.status} for {api_url}")
 
-            return self.filter_valid_events(events)
+            return self.filter_valid_events(all_events)
         except Exception as e:
             self.logger.error(f"Error in _parse_via_collection_api for {self.brewery.key}: {str(e)}")
             return []
 
-    def _extract_collection_id(self, soup: Any) -> Optional[str]:
-        """Extract the Squarespace calendar collection ID from the page"""
+    def _extract_collection_ids(self, soup: Any) -> List[str]:
+        """Extract all Squarespace calendar collection IDs from the page"""
+        ids = set()
         try:
             # Look for calendar block with data-block-json attribute
             calendar_blocks = soup.find_all("div", {"class": "calendar-block"})
@@ -136,7 +138,7 @@ class SquarespaceEventsParser(BaseParser):
                     block_data = json.loads(decoded_json)
                     collection_id = block_data.get("collectionId")
                     if collection_id:
-                        return str(collection_id)
+                        ids.add(str(collection_id))
 
             # Fallback: look in script tags for collection info
             scripts = soup.find_all("script")
@@ -147,21 +149,23 @@ class SquarespaceEventsParser(BaseParser):
                 text = script.string
                 
                 # Try common patterns in SQUARESPACE_CONTEXT or other scripts
-                patterns = [
+                # We use findall to get multiple matches
+                id_patterns = [
                     r'"collectionId"\s*:\s*"([^"]+)"',
                     r'"collection"\s*:\s*\{[^}]*"id"\s*:\s*"([^"]+)"',
                     r'collectionId\s*=\s*"([^"]+)"',
                 ]
                 
-                for pattern in patterns:
-                    match = re.search(pattern, text)
-                    if match:
-                        return match.group(1)
+                for pattern in id_patterns:
+                    matches = re.findall(pattern, text)
+                    for m in matches:
+                        ids.add(m)
             
-            return None
+            return list(ids)
         except Exception as e:
-            self.logger.error(f"Error extracting collection ID: {str(e)}")
-            return None
+            self.logger.error(f"Error extracting collection IDs: {str(e)}")
+            return []
+
 
     def _parse_json_item(self, item: dict, category: str = "food-truck") -> Optional[FoodTruckEvent]:
         try:
