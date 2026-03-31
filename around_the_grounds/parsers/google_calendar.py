@@ -143,38 +143,40 @@ class GoogleCalendarParser(BaseParser):
     def _parse_ical(self, text: str) -> List[FoodTruckEvent]:
         unfolded = re.sub(r"\r?\n[ \t]", "", text)
         blocks = re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", unfolded, re.DOTALL)
-        events: List[FoodTruckEvent] = []
+        
+        # We'll store events along with a "specificity" score
+        # 2 = Specific override (has RECURRENCE-ID)
+        # 1 = Single event (no RRULE)
+        # 0 = Generated from a recurring series
+        all_parsed: List[Tuple[FoodTruckEvent, int]] = []
+        
         for block in blocks:
-            events.extend(self._parse_vevent(block))
+            # We need to know if it was recurring to score it
+            is_recurring = "RRULE:" in block.upper()
+            has_recurrence_id = "RECURRENCE-ID" in block.upper()
+            
+            score = 0
+            if has_recurrence_id:
+                score = 2
+            elif not is_recurring:
+                score = 1
+                
+            events = self._parse_vevent(block)
+            for e in events:
+                all_parsed.append((e, score))
         
-        # Deduplicate and filter
-        # 1. Exact identical deduplication
-        seen_exact = set()
-        unique_events = []
-        for event in events:
-            key = (event.date.date(), event.food_truck_name.lower(), event.start_time, event.end_time)
-            if key in seen_exact:
-                continue
-            seen_exact.add(key)
-            unique_events.append(event)
-            
-        # 2. Category-specific strictness (e.g. only one truck per day for most breweries)
-        # We'll allow multiple if they have different start times (e.g. Brunch vs Dinner)
-        # But for Hellbent, they usually only have one.
-        seen_truck_slots = {}
-        final_events = []
+        # Deduplicate by slot (date, start_time), keeping the one with the highest score
+        # If scores are tied, we take the one that appeared later in the file (often the update)
+        best_events: Dict[Tuple, Tuple[FoodTruckEvent, int]] = {}
         
-        # Sort by date and then by how specifically they were defined (non-recurring first)
-        for event in unique_events:
-            if event.category == "food-truck":
-                slot_key = (event.date.date(), event.start_time)
-                if slot_key in seen_truck_slots:
-                    continue
-                seen_truck_slots[slot_key] = event
+        for event, score in all_parsed:
+            slot_key = (event.date.date(), event.start_time)
             
-            final_events.append(event)
-            
-        return final_events
+            if slot_key not in best_events or score >= best_events[slot_key][1]:
+                best_events[slot_key] = (event, score)
+                
+        # Return sorted by date
+        return [e for e, s in best_events.values()]
 
     def _parse_vevent(self, block: str) -> List[FoodTruckEvent]:
         summary = ""
