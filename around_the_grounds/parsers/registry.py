@@ -34,6 +34,7 @@ class ParserRegistry:
         "ravenna-brewing": SquarespaceEventsParser,
         "halcyon-brewing": SquarespaceEventsParser,
         "flying-bike": GoogleCalendarParser,
+        "watershed": GoogleCalendarParser,
         "lucky-envelope": LuckyEnvelopeParser,
         "shoreline-cc": WaFoodTrucksParser,
         "hellbent": GoogleCalendarParser,

@@ -134,6 +134,18 @@
         "note": "Static recurring events and permanent food truck",
         "api_type": "burke-gilman"
       }
+    },
+    {
+      "key": "watershed",
+      "name": "Watershed Pub & Kitchen",
+      "url": "https://watershedpub.com/events.ics",
+      "website_url": "https://www.watershedpub.com/",
+      "parser_config": {
+        "note": "Public iCal feed for events",
+        "exclude_patterns": [
+          "Happy Hour"
+        ]
+      }
     }
   ]
 }

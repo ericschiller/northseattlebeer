@@ -206,6 +206,13 @@ class GoogleCalendarParser(BaseParser):
         # Categorize first to see if it's a known event type (trivia, etc)
         category = _categorize(summary)
         
+        # Check exclude patterns
+        exclude_patterns = self.brewery.parser_config.get("exclude_patterns", [])
+        for pattern in exclude_patterns:
+            if re.search(pattern, summary, re.IGNORECASE):
+                self.logger.debug(f"Skipping excluded event: {summary}")
+                return []
+
         # If it's community/unknown and we have a default for this brewery, use it
         if category == "community":
             default_cat = self.brewery.parser_config.get("default_category")
