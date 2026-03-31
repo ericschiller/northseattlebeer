@@ -8,6 +8,13 @@ export default {
     "./app.vue",
     "./error.vue",
   ],
+  safelist: [
+    'bg-[#FCE7F3]', 'text-[#9D174D]',
+    'bg-[#F5D0FE]', 'text-[#701A75]',
+    'bg-[#DBEAFE]', 'text-[#1E40AF]',
+    'bg-[#FFEDD5]', 'text-[#9A3412]',
+    'bg-[#D1FAE5]', 'text-[#065F46]'
+  ],
   theme: {
     extend: {
       colors: {
