@@ -29,6 +29,7 @@ const badgeLabel = computed(() => {
 const badgeClasses = computed(() => {
   const cat = (props.category || '').toLowerCase()
   const desc = (props.description || '').toLowerCase()
+  const name = props.name.toLowerCase()
   
   if (cat.includes('trivia') || desc.includes('trivia')) {
     return 'bg-[#FCE7F3] text-[#9D174D]' // Pink
@@ -43,8 +44,21 @@ const badgeClasses = computed(() => {
     return 'bg-[#FFEDD5] text-[#9A3412]' // Orange
   }
   
-  // Default Mint for food trucks and others
-  return 'bg-[#D1FAE5] text-[#065F46]'
+  // For food trucks, use a deterministic color based on name
+  const colors = [
+    'bg-[#D1FAE5] text-[#065F46]', // Mint
+    'bg-[#DBEAFE] text-[#1E40AF]', // Blue
+    'bg-[#FFEDD5] text-[#9A3412]', // Orange
+    'bg-[#FCE7F3] text-[#9D174D]', // Pink
+    'bg-[#F5D0FE] text-[#701A75]'  // Fuchsia
+  ]
+  
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
 })
 </script>
 
