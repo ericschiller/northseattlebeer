@@ -22,7 +22,7 @@ interface WebData {
   errors?: string[]
 }
 
-const { data, pending, error } = useFetch<WebData>(() => `${useRuntimeConfig().app.baseURL}data.json`)
+const { data, pending, error } = useFetch<WebData>(() => `${useRuntimeConfig().app.baseURL}data.json?t=${Date.now()}`)
 
 const currentTab = ref<'trucks' | 'events'>('trucks')
 
