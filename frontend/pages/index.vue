@@ -114,25 +114,18 @@ const formatUpdatedDate = (isoString: string) => {
           :count="(events as FoodTruckEvent[]).length"
           :count-label="currentTab === 'trucks' ? ((events as FoodTruckEvent[]).length === 1 ? 'TRUCK' : 'TRUCKS') : ((events as FoodTruckEvent[]).length === 1 ? 'EVENT' : 'EVENTS')"
         >
-          <NuxtLink 
-            v-for="(event, eIdx) in events" 
+          <TruckItem
+            v-for="(event, eIdx) in events"
             :key="eIdx"
-            :to="event.category === 'food-truck' || !event.category ? `/truck/${slugify(event.vendor)}` : undefined"
-            :class="[
-              'block',
-              (event.category === 'food-truck' || !event.category) ? 'cursor-pointer' : 'cursor-default pointer-events-none'
-            ]"
-          >
-            <TruckItem
-              :name="event.vendor"
-              :location="event.location"
-              :location-url="event.location_url"
-              :time="event.start_time && event.end_time ? `${event.start_time} — ${event.end_time}` : 'All Day'"
-              :description="event.description"
-              :category="event.category"
-              :is-vision-extracted="event.extraction_method === 'vision'"
-            />
-          </NuxtLink>
+            :name="event.vendor"
+            :location="event.location"
+            :location-url="event.location_url"
+            :time="event.start_time && event.end_time ? `${event.start_time} — ${event.end_time}` : 'All Day'"
+            :description="event.description"
+            :category="event.category"
+            :is-vision-extracted="event.extraction_method === 'vision'"
+            :is-clickable="event.category === 'food-truck' || !event.category"
+          />
         </DaySection>
       </div>
 

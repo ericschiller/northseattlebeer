@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { slugify } from '~/utils/slugify'
+
 const props = defineProps<{
   name: string
   location: string
@@ -7,7 +9,16 @@ const props = defineProps<{
   description?: string
   category?: string
   isVisionExtracted?: boolean
+  isClickable?: boolean
 }>()
+
+const router = useRouter()
+
+const navigateToProfile = () => {
+  if (props.isClickable) {
+    router.push(`/truck/${slugify(props.name)}`)
+  }
+}
 
 const badgeLabel = computed(() => {
   if (props.description) return props.description
@@ -17,7 +28,13 @@ const badgeLabel = computed(() => {
 </script>
 
 <template>
-  <div class="group p-8 rounded-lg bg-[#FFFFFF] border border-[#1E293B]/10 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] transition-all duration-300 hover:border-primary-mint/30 hover:shadow-md">
+  <div 
+    @click="navigateToProfile"
+    :class="[
+      'group p-8 rounded-lg bg-[#FFFFFF] border border-[#1E293B]/10 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] transition-all duration-300 mb-4 last:mb-0',
+      isClickable ? 'hover:border-primary-mint/30 hover:shadow-md cursor-pointer' : 'cursor-default'
+    ]"
+  >
     <div class="flex flex-col md:flex-row md:items-center justify-between">
       <div class="max-w-md">
         <h3
@@ -31,7 +48,8 @@ const badgeLabel = computed(() => {
             v-if="locationUrl"
             :href="locationUrl"
             target="_blank"
-            class="hover:text-[#F97316] transition-colors"
+            @click.stop
+            class="hover:text-[#F97316] transition-colors relative z-10"
           >{{ location }}</a>
           <span v-else>{{ location }}</span>
         </p>
