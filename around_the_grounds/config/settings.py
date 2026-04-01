@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 # Git repository configuration
-DEFAULT_GIT_REPOSITORY = "https://github.com/steveandroulakis/ballard-food-trucks.git"
+DEFAULT_GIT_REPOSITORY = "https://github.com/ericschiller/northseattlebeer.git"
 
 
 def get_git_repository_url(override_url: Optional[str] = None) -> str:

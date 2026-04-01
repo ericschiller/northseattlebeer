@@ -1,9 +1,0 @@
-{
-  "framework": "nuxt",
-  "buildCommand": "npm run generate",
-  "outputDirectory": "frontend/.output/public",
-  "installCommand": "cd frontend && npm install",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
-}

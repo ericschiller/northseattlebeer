@@ -3,11 +3,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "around-the-grounds"
+name = "north-seattle-beer"
 version = "0.1.0"
-description = "A tool for tracking food truck schedules and locations"
+description = "A tool for tracking food truck schedules and brewery events in North Seattle"
 authors = [
-    {name = "Steve Androulakis", email = "steve@example.com"},
+    {name = "Eric Schiller", email = "ericschiller@gmail.com"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -53,8 +53,8 @@ dev = [
 around-the-grounds = "around_the_grounds.main:main"
 
 [project.urls]
-Homepage = "https://github.com/steveandroulakis/around-the-grounds"
-Repository = "https://github.com/steveandroulakis/around-the-grounds"
+Homepage = "https://github.com/ericschiller/northseattlebeer"
+Repository = "https://github.com/ericschiller/northseattlebeer"
 
 [tool.black]
 line-length = 88

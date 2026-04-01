@@ -1,1 +1,0 @@
-Refer to ./CLAUDE.md for comprehensive information and instructions.
