@@ -27,6 +27,13 @@ class SquarespaceEventsParser(BaseParser):
         (r"run(ning)?\s*club|knit|coloring|paint|challenge|game\s*night|meet|choir", "community"),
     ]
 
+    # Global exclude patterns for internal or irrelevant events
+    GLOBAL_EXCLUDE_PATTERNS = [
+        r"staff\s*meeting",
+        r"closed\s*for",
+        r"opening\s*late",
+    ]
+
     def __init__(self, brewery: Brewery) -> None:
         super().__init__(brewery)
         self.exclude_patterns = self.brewery.parser_config.get("exclude_patterns", [])
@@ -230,7 +237,12 @@ class SquarespaceEventsParser(BaseParser):
             if re.search(pattern, title, re.IGNORECASE):
                 return None
         
-        # 2. Check brewery-specific patterns (high priority)
+        # 2. Check global common exclude patterns
+        for pattern in self.GLOBAL_EXCLUDE_PATTERNS:
+            if re.search(pattern, title, re.IGNORECASE):
+                return None
+        
+        # 3. Check brewery-specific patterns (high priority)
         for pattern, category in self.category_patterns.items():
             if re.search(pattern, title, re.IGNORECASE):
                 return category

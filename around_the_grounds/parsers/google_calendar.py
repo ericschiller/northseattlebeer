@@ -25,6 +25,12 @@ _CATEGORY_RULES: List[Tuple[str, str]] = [
     (r"food\s*truck", "food-truck"),
 ]
 
+_GLOBAL_EXCLUDE_PATTERNS = [
+    r"staff\s*meeting",
+    r"closed\s*for",
+    r"opening\s*late",
+]
+
 
 def _clean_summary(summary: str) -> str:
     """Remove common prefixes from event summary."""
@@ -230,6 +236,12 @@ class GoogleCalendarParser(BaseParser):
         for pattern in exclude_patterns:
             if re.search(pattern, summary, re.IGNORECASE):
                 self.logger.debug(f"Skipping excluded event: {summary}")
+                return []
+        
+        # Check global exclude patterns
+        for pattern in _GLOBAL_EXCLUDE_PATTERNS:
+            if re.search(pattern, summary, re.IGNORECASE):
+                self.logger.debug(f"Skipping global excluded event: {summary}")
                 return []
 
         # If it's community/unknown and we have a default for this brewery, use it

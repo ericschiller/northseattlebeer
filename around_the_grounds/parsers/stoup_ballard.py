@@ -92,11 +92,13 @@ class StoupBallardParser(BaseParser):
             # If we have both date and time, this might be a food truck name
             if current_date and current_time and len(line) > 3:
                 # Skip common non-food-truck words
-                if not any(
+                if any(
                     word in line.lower()
-                    for word in ["schedule", "food truck", "ballard"]
+                    for word in ["schedule", "food truck", "ballard", "staff meeting", "closed for", "opening late"]
                 ):
-                    start_time, end_time = self._parse_time(current_date, current_time)
+                    continue
+                
+                start_time, end_time = self._parse_time(current_date, current_time)
                     event = FoodTruckEvent(
                         brewery_key=self.brewery.key,
                         brewery_name=self.brewery.name,

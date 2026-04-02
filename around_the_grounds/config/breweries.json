@@ -183,7 +183,8 @@
       "parser_config": {
         "note": "Public iCal feed for events",
         "exclude_patterns": [
-          "Happy Hour"
+          "Happy Hour",
+          "staff meeting"
         ]
       }
     }
