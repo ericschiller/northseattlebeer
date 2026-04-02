@@ -54,7 +54,7 @@ class ScraperCoordinator:
         async with aiohttp.ClientSession(
             connector=connector,
             timeout=self.timeout,
-            headers={"User-Agent": "Around-the-Grounds Food Truck Scraper"},
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"},
         ) as session:
             tasks = []
             for brewery in breweries:
@@ -102,7 +102,7 @@ class ScraperCoordinator:
         async with aiohttp.ClientSession(
             connector=connector,
             timeout=self.timeout,
-            headers={"User-Agent": "Around-the-Grounds Food Truck Scraper"},
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"},
         ) as session:
             events, error = await self._scrape_brewery(session, brewery)
 
