@@ -99,15 +99,15 @@ class StoupBallardParser(BaseParser):
                     continue
                 
                 start_time, end_time = self._parse_time(current_date, current_time)
-                    event = FoodTruckEvent(
-                        brewery_key=self.brewery.key,
-                        brewery_name=self.brewery.name,
-                        food_truck_name=line,
-                        date=current_date,
-                        start_time=start_time,
-                        end_time=end_time,
-                    )
-                    events.append(event)
+                event = FoodTruckEvent(
+                    brewery_key=self.brewery.key,
+                    brewery_name=self.brewery.name,
+                    food_truck_name=line,
+                    date=current_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                )
+                events.append(event)
 
         return events
 
