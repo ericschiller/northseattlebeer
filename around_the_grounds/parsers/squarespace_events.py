@@ -24,7 +24,7 @@ class SquarespaceEventsParser(BaseParser):
     GLOBAL_CATEGORY_RULES = [
         (r"trivia|bingo|quiz", "trivia"),
         (r"live\s*music|concert|open\s*mic|jam\s*session|jazz|music|songs?|performance|stories|stage|improv", "live-music"),
-        (r"run(ning)?\s*club|knit|coloring|paint|challenge|game\s*night|meet|choir", "community"),
+        (r"run(ning)?\s*club|knit|coloring|paint|challenge|game\s*night|meet|choir|sale|happy\s*hour", "community"),
     ]
 
     # Global exclude patterns for internal or irrelevant events
