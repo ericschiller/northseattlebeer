@@ -16,8 +16,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 # Copy Python dependency files and install
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen
+# We include README.md because hatchling (the build backend) requires it
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --frozen --no-install-project
 
 # Copy frontend dependency files and install
 COPY frontend/package*.json ./frontend/
@@ -25,6 +26,9 @@ RUN cd frontend && npm install
 
 # Copy the entire project
 COPY . .
+
+# Now install the project itself
+RUN uv sync --frozen
 
 # Ensure the public directory exists and has a placeholder data.json
 RUN mkdir -p frontend/public && touch frontend/public/data.json
