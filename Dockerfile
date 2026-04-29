@@ -34,7 +34,7 @@ RUN uv sync --frozen
 RUN mkdir -p frontend/public && touch frontend/public/data.json
 
 # Build the frontend (static generation)
-RUN cd frontend && npm run build
+RUN cd frontend && npm run generate
 
 # Make the entrypoint script executable
 RUN chmod +x scripts/dokploy-entrypoint.sh

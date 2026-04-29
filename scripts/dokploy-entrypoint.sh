@@ -30,5 +30,7 @@ fi
 # Start the web server
 echo "🌐 Starting web server..."
 cd frontend
-# Use 'nuxi preview' to serve the static build
-exec npx nuxi preview --port 3000 --host 0.0.0.0
+# Use environment variables and explicit path to avoid argument confusion
+export NITRO_HOST=0.0.0.0
+export NITRO_PORT=3000
+exec npx nuxi preview .
