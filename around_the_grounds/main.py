@@ -58,49 +58,28 @@ def format_events_output(
     """Format events and errors for display."""
     output = []
 
-    # Show events
-    if events:
-        output.append(f"Found {len(events)} food truck events:")
+    truck_events = [e for e in events if e.category == "food-truck"]
+    other_events = [e for e in events if e.category != "food-truck"]
+
+    # Show trucks
+    if truck_events:
+        output.append(f"🚛 Found {len(truck_events)} food truck events:")
+        output.append("")
+        output.extend(_format_event_list(truck_events))
         output.append("")
 
-        current_date = None
-        for event in events:
-            event_date = event.date.strftime("%A, %B %d, %Y")
-
-            if current_date != event_date:
-                if current_date is not None:
-                    output.append("")
-                output.append(f"📅 {event_date}")
-                current_date = event_date
-
-            time_str = ""
-            if event.start_time:
-                time_str = f" {event.start_time.strftime('%I:%M %p')}"
-                if event.end_time:
-                    time_str += f" - {event.end_time.strftime('%I:%M %p')}"
-
-            # Check if this is an error event (fallback)
-            if "Check Instagram" in event.food_truck_name or "check Instagram" in (
-                event.description or ""
-            ):
-                output.append(
-                    f"  ❌ {event.food_truck_name} @ {event.brewery_name}{time_str}"
-                )
-                if event.description:
-                    output.append(f"     {event.description}")
-            else:
-                output.append(
-                    f"  🚚 {event.food_truck_name} @ {event.brewery_name}{time_str}"
-                )
-                if event.description:
-                    output.append(f"     {event.description}")
+    # Show other events
+    if other_events:
+        output.append(f"🎉 Found {len(other_events)} brewery events:")
+        output.append("")
+        output.extend(_format_event_list(other_events))
+        output.append("")
 
     # Show errors
     if errors:
         user_messages = [error.to_user_message() for error in errors]
         user_messages = list(dict.fromkeys(user_messages))
         if events:
-            output.append("")
             output.append("⚠️  Processing Summary:")
             output.append(f"✅ {len(events)} events found successfully")
             output.append(f"❌ {len(errors)} breweries failed")
@@ -113,9 +92,47 @@ def format_events_output(
             output.append(f"  • {message}")
 
     if not events and not errors:
-        output.append("No food truck events found for the next 7 days.")
+        output.append("No events found for the next 7 days.")
 
     return "\n".join(output)
+
+
+def _format_event_list(events: List[FoodTruckEvent]) -> List[str]:
+    """Helper to format a list of events by date."""
+    output = []
+    current_date = None
+    for event in events:
+        event_date = event.date.strftime("%A, %B %d, %Y")
+
+        if current_date != event_date:
+            if current_date is not None:
+                output.append("")
+            output.append(f"📅 {event_date}")
+            current_date = event_date
+
+        time_str = ""
+        if event.start_time:
+            time_str = f" {event.start_time.strftime('%I:%M %p')}"
+            if event.end_time:
+                time_str += f" - {event.end_time.strftime('%I:%M %p')}"
+
+        icon = "🚚" if event.category == "food-truck" else "✨"
+        
+        # Check if this is an error event (fallback)
+        if "Check Instagram" in event.food_truck_name or "check Instagram" in (
+            event.description or ""
+        ):
+            output.append(
+                f"  ❌ {event.food_truck_name} @ {event.brewery_name}{time_str}"
+            )
+        else:
+            output.append(
+                f"  {icon} {event.food_truck_name} @ {event.brewery_name}{time_str}"
+            )
+        if event.description:
+            output.append(f"     {event.description}")
+            
+    return output
 
 
 def _event_to_web(event: FoodTruckEvent) -> dict:

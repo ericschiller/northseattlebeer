@@ -44,7 +44,7 @@ def _categorize(summary: str) -> str:
     for pattern, cat in _CATEGORY_RULES:
         if re.search(pattern, summary, re.IGNORECASE):
             return cat
-    return "community"
+    return "unknown"
 
 
 def _parse_dt(params: str, value: str) -> Optional[datetime]:
@@ -245,11 +245,13 @@ class GoogleCalendarParser(BaseParser):
                 self.logger.debug(f"Skipping global excluded event: {summary}")
                 return []
 
-        # If it's community/unknown and we have a default for this brewery, use it
-        if category == "community":
+        # If it's unknown and we have a default for this brewery, use it
+        if category == "unknown":
             default_cat = self.brewery.parser_config.get("default_category")
             if default_cat:
                 category = default_cat
+            else:
+                category = "community"
 
         # STALE EVENT FILTER:
         # Chuck's has many old recurring events from 2013-2015.
