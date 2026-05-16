@@ -23,8 +23,9 @@ class SquarespaceEventsParser(BaseParser):
     # Global category patterns to catch common non-truck events across all breweries
     GLOBAL_CATEGORY_RULES = [
         (r"trivia|bingo|quiz", "trivia"),
-        (r"live\s*music|concert|open\s*mic|jam\s*session|jazz|music|songs?|performance|stories|stage|improv", "live-music"),
-        (r"run(ning)?\s*club|knit|coloring|paint|challenge|game\s*night|meet|choir|sale|happy\s*hour", "community"),
+        (r"live\s*music|concert|open\s*mic|jam\s*session|jazz|music|songs?|performance|stories|stage|improv|karaoke|comedy", "live-music"),
+        (r"run(ning)?\s*club|knit|coloring|paint|challenge|game\s*night|meet|choir|sale|happy\s*hour|book\s*club|dice|series|drafts\s*and\s*dice|workshop|class|educational", "community"),
+        (r"food\s*truck", "food-truck"),
     ]
 
     # Global exclude patterns for internal or irrelevant events
