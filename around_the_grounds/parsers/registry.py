@@ -40,6 +40,7 @@ class ParserRegistry:
         "lucky-envelope": LuckyEnvelopeParser,
         "shoreline-cc": WaFoodTrucksParser,
         "hellbent": GoogleCalendarParser,
+        "postdoc-kenmore": GoogleCalendarParser,
     }
 
     @classmethod

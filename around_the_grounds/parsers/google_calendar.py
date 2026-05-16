@@ -18,10 +18,10 @@ _PACIFIC = ZoneInfo("America/Los_Angeles")
 _WEEKDAY = {"MO": 0, "TU": 1, "WE": 2, "TH": 3, "FR": 4, "SA": 5, "SU": 6}
 
 _CATEGORY_RULES: List[Tuple[str, str]] = [
-    (r"live\s*music|concert|open\s*mic|jam\s*session|jazz|stories|stage|improv", "live-music"),
+    (r"live\s*music|concert|open\s*mic|jam\s*session|jazz|stories|stage|improv|comedy", "live-music"),
     (r"trivia", "trivia"),
     (r"run(ning)?\s*club", "community"),
-    (r"yarnaholics|knitting|choir|paint|challenge|sale|happy\s*hour", "community"),
+    (r"yarnaholics|knitting|choir|paint|challenge|sale|happy\s*hour|anniversary|party|celebration|bingo|coloring|chess|vote", "community"),
     (r"food\s*truck", "food-truck"),
 ]
 
@@ -33,9 +33,11 @@ _GLOBAL_EXCLUDE_PATTERNS = [
 
 
 def _clean_summary(summary: str) -> str:
-    """Remove common prefixes from event summary."""
+    """Remove common prefixes and location suffixes from event summary."""
     # Remove "Dinner:", "Brunch:", "Food Truck:", etc.
     cleaned = re.sub(r"^(dinner|brunch|food\s*truck|event)\s*:\s*", "", summary, flags=re.IGNORECASE)
+    # Remove "@ [Location]" or "at [Location]" suffixes
+    cleaned = re.sub(r"\s+(@|at)\s+.*$", "", cleaned, flags=re.IGNORECASE)
     return cleaned.strip()
 
 

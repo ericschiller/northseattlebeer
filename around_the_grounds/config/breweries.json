@@ -187,6 +187,16 @@
           "staff meeting"
         ]
       }
+    },
+    {
+      "key": "postdoc-kenmore",
+      "name": "Postdoc Brewing Kenmore",
+      "url": "https://calendar.google.com/calendar/ical/kftc%40postdocbrewing.com/public/basic.ics",
+      "website_url": "https://www.postdocbrewing.com/events#KenmoreEvents",
+      "parser_config": {
+        "note": "Public Google Calendar iCal feed for Kenmore Food Truck Corner",
+        "default_category": "food-truck"
+      }
     }
   ]
 }
